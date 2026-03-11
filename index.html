@@ -1,0 +1,6619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analogy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      background: #0a0a0a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #e5e5e5;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Search Screen */
+    .search-screen {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      transition: opacity 0.3s ease;
+    }
+
+    .search-screen.hidden {
+      display: none;
+    }
+
+    .search-title {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .search-subtitle {
+      font-size: 0.875rem;
+      color: #737373;
+      margin-bottom: 32px;
+    }
+
+    .search-box {
+      width: 100%;
+      max-width: 280px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 1.25rem;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 12px;
+      color: #e5e5e5;
+      text-align: center;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: #404040;
+      background: #1a1a1a;
+    }
+
+    .search-hint {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: #525252;
+      text-align: center;
+    }
+
+    /* Card Screen */
+    .card-screen {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .card-screen.active {
+      display: flex;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #262626;
+    }
+
+    .back-btn {
+      font-size: 0.875rem;
+      color: #737373;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      color: #e5e5e5;
+      background: #1a1a1a;
+    }
+
+    .counter {
+      font-size: 0.875rem;
+      color: #737373;
+      font-family: monospace;
+    }
+
+    .card-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    .card-content {
+      text-align: center;
+      max-width: 90%;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .cite-badge {
+      font-size: 0.875rem;
+      color: #525252;
+      font-family: monospace;
+      margin-bottom: 24px;
+      display: inline-block;
+      padding: 6px 12px;
+      background: #141414;
+      border-radius: 20px;
+      border: 1px solid #262626;
+    }
+
+    .cite-badge.other {
+      color: #a3a3a3;
+      border-color: #404040;
+    }
+
+    .analogy-pair {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+
+    .analogy-pair .word {
+      color: #e5e5e5;
+    }
+
+    .analogy-pair .colon {
+      color: #525252;
+      margin: 0 8px;
+    }
+
+    .relation {
+      font-size: 1.125rem;
+      color: #a3a3a3;
+      margin-bottom: 32px;
+      line-height: 1.4;
+    }
+
+    .answer-section {
+      padding-top: 24px;
+      border-top: 1px solid #262626;
+    }
+
+    .answer-label {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #22c55e;
+      margin-bottom: 12px;
+    }
+
+    .answer-pair {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: #22c55e;
+    }
+
+    .answer-pair .word {
+      background: rgba(34, 197, 94, 0.08);
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #166534;
+    }
+
+    .swipe-hint {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: #404040;
+      text-align: center;
+    }
+
+    /* Animations */
+    .slide-out-left { transform: translateX(-100px); opacity: 0; }
+    .slide-out-right { transform: translateX(100px); opacity: 0; }
+    .slide-out-up { transform: translateY(-80px); opacity: 0; }
+    .slide-out-down { transform: translateY(80px); opacity: 0; }
+    .slide-in-left { transform: translateX(-100px); opacity: 0; }
+    .slide-in-right { transform: translateX(100px); opacity: 0; }
+    .slide-in-up { transform: translateY(-80px); opacity: 0; }
+    .slide-in-down { transform: translateY(80px); opacity: 0; }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .search-title { font-size: 2rem; }
+      .analogy-pair { font-size: 1.625rem; }
+      .relation { font-size: 1rem; }
+      .answer-pair { font-size: 1.25rem; }
+    }
+
+    @media (max-height: 700px) {
+      .analogy-pair { font-size: 1.5rem; }
+      .relation { font-size: 0.9375rem; margin-bottom: 20px; }
+      .answer-pair { font-size: 1.125rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Search Screen -->
+  <div class="search-screen" id="searchScreen">
+    <div class="search-title">Analogy</div>
+    <div class="search-subtitle">Practice GRE Big Book analogies</div>
+    <div class="search-box">
+      <input type="text" class="search-input" id="searchInput" placeholder="01, 5, 12, Other..." autocomplete="off">
+      <div class="search-hint">Press Enter to search</div>
+    </div>
+  </div>
+
+  <!-- Card Screen -->
+  <div class="card-screen" id="cardScreen">
+    <div class="card-header">
+      <div class="back-btn" onclick="showSearch()">← Back</div>
+      <div class="counter" id="counter">0 / 0</div>
+    </div>
+    <div class="card-container" id="cardContainer">
+      <div class="card-content" id="cardContent">
+        <div class="cite-badge" id="citeBadge">00-0</div>
+        <div class="analogy-pair" id="analogyPair">
+          <span class="word">word</span><span class="colon">:</span><span class="word">word</span>
+        </div>
+        <div class="relation" id="relation">relation</div>
+        <div class="answer-section">
+          <div class="answer-label">Answer</div>
+          <div class="answer-pair" id="answerPair">
+            <span class="word">word</span><span class="colon">:</span><span class="word">word</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="swipe-hint">Swipe any direction to navigate</div>
+  </div>
+
+  <script>
+    const analogyData = [
+  {
+    "analogy": "abraded:friction",
+    "relation": "friction causes ST to be abraded",
+    "answer": "vaporized:heat",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "barrage:explosives",
+    "relation": "explosives cause barrage",
+    "answer": "deluge:rain",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "catalyst:change",
+    "relation": "a catalyst causes a change",
+    "answer": "argument:rift",
+    "cite": "etc"
+  },
+  {
+    "analogy": "crease:folding",
+    "relation": "a crease is made by folding",
+    "answer": "hole:perforating",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "detrimental:damage",
+    "relation": "detrimental is to cause damage",
+    "answer": "soporific:drowsiness",
+    "cite": "etc"
+  },
+  {
+    "analogy": "droll:laugh",
+    "relation": "droll causes SB to laugh",
+    "answer": "grisly:flinch",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "eradicate:destruction",
+    "relation": "to eradicate causes destruction",
+    "answer": "desiccate:dryness",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "explosion:destruction",
+    "relation": "an explosion causes destruction",
+    "answer": "virus:illness",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "fear:intimidation",
+    "relation": "intimidation is to make SB fear",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "fertilize:grow",
+    "relation": "to fertilize causes ST to grow",
+    "answer": "immunize:resist",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "fertilizer:soil",
+    "relation": "fertilizer causes soil to be healthy/productive",
+    "answer": "",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "hemophilia:bleed",
+    "relation": "hemophilia causes to bleed continuously",
+    "answer": "",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "invention:originality",
+    "relation": "originality is needed for an invention",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "juggernaut:crush",
+    "relation": "juggernaut causes SB to crush",
+    "answer": "quisling:betray",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "narcotic:sleep",
+    "relation": "narcotic causes to sleep",
+    "answer": "humor:laugh",
+    "cite": "etc"
+  },
+  {
+    "analogy": "numb:insensible",
+    "relation": "numb is to make ST insensible",
+    "answer": "burnish:lustrous",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "practicing:expertise",
+    "relation": "practicing makes SB have expertise",
+    "answer": "exercising:strength",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "reaction:catalyst",
+    "relation": "catalyst causes reaction to be speedy",
+    "answer": "",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "retard:brake",
+    "relation": "a brake causes retard",
+    "answer": "",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "river:gorge",
+    "relation": "a river causes a gorge",
+    "answer": "wind:dune",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "rust:corrosion",
+    "relation": "corrosion causes rust",
+    "answer": "dew:condensation",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "sedative:drowsiness",
+    "relation": "a sedative causes drowsiness",
+    "answer": "anesthetic:numbness",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "sedative:pacify",
+    "relation": "a sedative causes ST to pacify",
+    "answer": "antiseptic:sterilize",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "stratagem:deceive",
+    "relation": "stratagem causes SB to deceive",
+    "answer": "concession:placate",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "vaccination:immunity",
+    "relation": "vaccination causes immunity",
+    "answer": "erosion:gully",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "attack:vanquished",
+    "relation": "to attack causes SB vanquished",
+    "answer": "goad:provoked",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "soot:combustion",
+    "relation": "soot is produced as a result of combustion",
+    "answer": "sawdust:woodcutting",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "accelerate:speed",
+    "relation": "to accelerate is to increase speed",
+    "answer": "prolong:duration",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "acorn:squirrel",
+    "relation": "an acorn is squirrel's food",
+    "answer": "",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "aristocracy:nobles",
+    "relation": "aristocracy is governed by nobles",
+    "answer": "technocracy:technocrat",
+    "cite": "etc"
+  },
+  {
+    "analogy": "articulate:clearly",
+    "relation": "to articulate is to speak clearly",
+    "answer": "shout:loudly",
+    "cite": "etc"
+  },
+  {
+    "analogy": "articulate:speech",
+    "relation": "to articulate is to make speech clearly",
+    "answer": "graceful:movement",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "authoritative:acceptance",
+    "relation": "authoritative is to deserve acceptance",
+    "answer": "conspicuous:attention",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "bear:hibernate",
+    "relation": "a bear is an animal which hibernates in winter",
+    "answer": "bird:migrate",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "belligerent:war",
+    "relation": "belligerent is to like war",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "bombast:pompous",
+    "relation": "bombast is a pompous speech",
+    "answer": "tirade:critical",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "cacophony:sound",
+    "relation": "cacophony is to have a lot of different sound",
+    "answer": "glare:light",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "carve:statue",
+    "relation": "a statue is ST carved",
+    "answer": "",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "carve:turkey",
+    "relation": "to carve is to cut a turkey into pieces",
+    "answer": "slice:cake",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "chary:caution",
+    "relation": "chary is to have caution",
+    "answer": "imperturbable:composure",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "choreography:dance",
+    "relation": "choreography is a process to arrange a dance",
+    "answer": "plot:story",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "deport:nation",
+    "relation": "to deport is to banish from a nation",
+    "answer": "expel:school",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "despotic:tyranny",
+    "relation": "tyranny is despotic",
+    "answer": "generous:liberality",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "distill:purity",
+    "relation": "to distill is a process to raise purity",
+    "answer": "leaven:volume",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "drink:thirsty",
+    "relation": "thirsty is to have desire to drink water",
+    "answer": "",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "elegy:sorrow",
+    "relation": "an elegy is a song of sorrow",
+    "answer": "eulogy:admiration",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "emigrate:country",
+    "relation": "to emigrate is to leave a country",
+    "answer": "retreat:position",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "endow:income",
+    "relation": "to endow is to provide with a source of income",
+    "answer": "endorse:approval",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "enunciate:words",
+    "relation": "to enunciate is to speak words clearly",
+    "answer": "lumn:line",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "epidermis:mammal",
+    "relation": "a mammal is covered with epidermis",
+    "answer": "bark:conifer",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "epitaph:tombstone",
+    "relation": "an epitaph is carved in a tombstone",
+    "answer": "motto:shield",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "equivocate:commitment",
+    "relation": "?",
+    "answer": "procrastinate:action",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "expend:volume",
+    "relation": "to expend is to increase volume",
+    "answer": "proliferate:number",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "frenetic:movement",
+    "relation": "frenetic is to make movement easy",
+    "answer": "fanatical:belief",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "gargoyle:grotesque",
+    "relation": "gargoyle is ST/SB that is grotesque",
+    "answer": "philanthropist:benevolent",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "grotesque:distorted",
+    "relation": "grotesque is to be distorted",
+    "answer": "monotonous:constant",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "harbinger:beginning",
+    "relation": "to harbinger is to announce the beginning",
+    "answer": "herald:advent",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "homogenization:uniform",
+    "relation": "homogenization is a process of being uniform",
+    "answer": "putrefaction:rotten",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "hymn:praise",
+    "relation": "a hymn is a song to praise",
+    "answer": "dirge:grief",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "laconic:speech",
+    "relation": "laconic is to make a simple speech",
+    "answer": "austere:design",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "laconic:talk",
+    "relation": "laconic is to talk succinctly",
+    "answer": "",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "leaf:oak",
+    "relation": "an oak has leafs",
+    "answer": "needle:pine",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "legible:handwriting",
+    "relation": "legible means handwriting is understandable",
+    "answer": "lucid:thinking",
+    "cite": "etc"
+  },
+  {
+    "analogy": "log:ship",
+    "relation": "a log is a record of a ship",
+    "answer": "diary:person",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "low:cattle",
+    "relation": "low is sound made by a cattle",
+    "answer": "grunt:hogs",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "lush:vegetation",
+    "relation": "lush is to have lots of vegetation",
+    "answer": "crowded:people",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "mandatory:comply",
+    "relation": "mandatory is to make SB comply",
+    "answer": "forbidden:abstain",
+    "cite": "CYB"
+  },
+  {
+    "analogy": "mercenary:money",
+    "relation": "mercenary is to seek money greedily",
+    "answer": "vindictive:revenge",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "mercurial:mood",
+    "relation": "mercurial is mood easy to change",
+    "answer": "fickle:affection",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "molt:bird",
+    "relation": "a bird molts to change its skin",
+    "answer": "slough:snake",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "motley:color",
+    "relation": "motley is to have many different colors",
+    "answer": "cacophonous:sound",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "muffle:sound",
+    "relation": "to muffle is to lessen sound",
+    "answer": "assuage:grief",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "muted:color",
+    "relation": "muted is to lessen color",
+    "answer": "muffled:sound",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "mutter:indistinct",
+    "relation": "to mutter is to speak indistinctly",
+    "answer": "drone:monotonous",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "nurture:child",
+    "relation": "to nurture is to take care of a child",
+    "answer": "cultivate:crop",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "pedantic:educated",
+    "relation": "pedantic is to be proud of being educated",
+    "answer": "",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "pernicious:injure",
+    "relation": "pernicious is to injure SB easily",
+    "answer": "disingenuous:mislead",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "plutocracy:wealth",
+    "relation": "plutocracy is controlled by people of wealth",
+    "answer": "gerontocracy:age",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "polemical:dispute",
+    "relation": "polemical is to like to dispute",
+    "answer": "lachrymose:mourn",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "preeminence:importance",
+    "relation": "preeminence is to have much importance",
+    "answer": "preponderance:weight",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "prescience:future",
+    "relation": "prescience is to know future",
+    "answer": "erudition:esoterica",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "prune:hedge",
+    "relation": "to prune is to cut hedge to improve its shape",
+    "answer": "trim:hair",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "pungent:odor",
+    "relation": "pungent means odor is acute",
+    "answer": "caustic:comment",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "questionable:incredulity",
+    "relation": "incredulity is to be questionable",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "redolent:smell",
+    "relation": "redolent is to smell good",
+    "answer": "piquent:taste",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "repeal:law",
+    "relation": "to repeal is to take back a law",
+    "answer": "withdraw:offer",
+    "cite": "etc"
+  },
+  {
+    "analogy": "requiem:grief",
+    "relation": "a requiem is a song of grief",
+    "answer": "paean:delight",
+    "cite": "etc"
+  },
+  {
+    "analogy": "scoop:concave",
+    "relation": "scoop is an implement which is concave",
+    "answer": "spatula:flat",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "scrupulous:principles",
+    "relation": "scrupulous is to have principles",
+    "answer": "solicitous:care",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "simplicity:understand",
+    "relation": "simplicity is to make ST easy to understand",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "slither:snake",
+    "relation": "to slither is movement of a snake",
+    "answer": "waddle:duck",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "slur:pronunciation",
+    "relation": "to slur means pronunciation is not clear",
+    "answer": "",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "striated:groove",
+    "relation": "striated is to have groove",
+    "answer": "braided:strand",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "subsidy:support",
+    "relation": "subsidy is money for support",
+    "answer": "debt:obligation",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "tangled:knot",
+    "relation": "a knot is ST tangled",
+    "answer": "crumpled:wrinkle",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "tender:acceptance",
+    "relation": "to tender is to require acceptance",
+    "answer": "exhibit:inspection",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "theft:punishment",
+    "relation": "a theft deserves punishment",
+    "answer": "",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "thirsty:water",
+    "relation": "thirsty is to have desire for water",
+    "answer": "",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "topsoil:erode",
+    "relation": "to erode is to eat away topsoil",
+    "answer": "paint:peel",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "torque:rotation",
+    "relation": "torque is a power of rotation",
+    "answer": "tension:elongation",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "trespass:property",
+    "relation": "to trespass is to enter property illegally",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "trophy:contestant",
+    "relation": "a trophy is for a winning contestant",
+    "answer": "honors:student",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "usury:interest",
+    "relation": "a usury usually take high interest",
+    "answer": "gouging:price",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "vernacular:place",
+    "relation": "a vernacular is vocabularies used only in a place",
+    "answer": "jargon:profession",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "volatile:temper",
+    "relation": "volatile is to have temper",
+    "answer": "ready:wit",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "voracious:appetite",
+    "relation": "voracious is to have strong appetite",
+    "answer": "",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "alchemy:science",
+    "relation": "alchemy is a defective science",
+    "answer": "nostrum:remedy",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "alias:name",
+    "relation": "an alias is a false name",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "articulate:unclear",
+    "relation": "to articulate is not to be unclear",
+    "answer": "elaborate:sketchy",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "astrology:astronomy",
+    "relation": "astrology a defective part of astronomy",
+    "answer": "alchemy:chemistry",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "babble:speak",
+    "relation": "to babble is a defective way of speaking",
+    "answer": "stagger:walk",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "babble:talk",
+    "relation": "to babble is to talk defectively",
+    "answer": "scribble:write",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "blame:scapegoat",
+    "relation": "a scapegoat is blamed without plausible reasons",
+    "answer": "lionize:hero",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "bravado:bravery",
+    "relation": "bravado is false bravery",
+    "answer": "perjury:testimony",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "chicanery:clever",
+    "relation": "chicanery is to be defectively clever",
+    "answer": "tactlessness:truthful",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "conspire:plan",
+    "relation": "to conspire is to plan defectively",
+    "answer": "",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "denture:teeth",
+    "relation": "a denture is a set of artificial teeth",
+    "answer": "toupee:hair",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "depart:abscond",
+    "relation": "to abscond is to depart and hide",
+    "answer": "store:secrete",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "diamond:rhinestone",
+    "relation": "a rhinestone is a counterfeit of a diamond",
+    "answer": "",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "digressive:statement",
+    "relation": "digressive is to be away from a statement",
+    "answer": "circuitous:route",
+    "cite": "etc"
+  },
+  {
+    "analogy": "doggerel:verse",
+    "relation": "a doggerel is a defective verse",
+    "answer": "burlesque:play",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "embezzle:funds",
+    "relation": "to embezzle is to take funds defectively",
+    "answer": "usurp:power",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "epithet:disparage",
+    "relation": "epithet is used to disparage",
+    "answer": "alias:mislead",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "giggle:laughter",
+    "relation": "a giggle is a weak form of a laughter",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "glimmer:dazzle",
+    "relation": "to glimmer is to dazzle defectively",
+    "answer": "murmur:resound",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "hoax:deceive",
+    "relation": "to hoax is to deceive intentionally",
+    "answer": "filibuster:delay",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "infiltrate:enter",
+    "relation": "to infiltrate is to enter secretly",
+    "answer": "insinuate:say",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "interest:inveigle",
+    "relation": "to inveigle is to interest defectively",
+    "answer": "plan:scheme",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "interested:agog",
+    "relation": "agog is to be interested defectively",
+    "answer": "careful:meticulous",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "leave:abscond",
+    "relation": "to abscond is to leave secretly",
+    "answer": "take:steal",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "limp:walk",
+    "relation": "to limp is to walk defectively",
+    "answer": "speak:harangue",
+    "cite": "10-4/2"
+  },
+  {
+    "analogy": "lurk:wait",
+    "relation": "to lurk is to wait secretly",
+    "answer": "abscond:depart",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "malapropism:verbal",
+    "relation": "malapropism is a confused use of verbal words",
+    "answer": "gaffe:social",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "malinger:ail",
+    "relation": "to malinger is to ail falsely",
+    "answer": "flatter:appreciate",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "milk:extract",
+    "relation": "to milk is to extract defectively",
+    "answer": "exploit:utilize",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "minutiae:details",
+    "relation": "minutiae are defective details",
+    "answer": "quibbles:objections",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "misjudge:assess",
+    "relation": "to misjudge is not to assess correctly",
+    "answer": "misconstrue:interpret",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "mock:imitate",
+    "relation": "to mock is to imitate despicably",
+    "answer": "taunt:challenge",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "narcissism:love",
+    "relation": "narcissism is a defective form of love",
+    "answer": "smirk:smile",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "obedience:obsequiousness",
+    "relation": "obsequiousness is a defective form of obedience",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "parry:question",
+    "relation": "to parry is to avoid question",
+    "answer": "shirk:duty",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "patriotic:chauvinistic",
+    "relation": "chauvinistic is to be patriotic defectively",
+    "answer": "receptive:gullible",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "pirate:take",
+    "relation": "a pirate takes ST away without permission",
+    "answer": "forge:copy",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "prate:speak",
+    "relation": "to prate is to speak defectively",
+    "answer": "saunter:walk",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "scribble:write",
+    "relation": "to scribble is to write defectively",
+    "answer": "mumble:talk",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "simper:smile",
+    "relation": "to simper is to smile defectively",
+    "answer": "babble:talk",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "slur:speech",
+    "relation": "to slur is to speak defectively",
+    "answer": "smudge:writing",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "stray:group",
+    "relation": "to stray is to isolate from a group",
+    "answer": "digress:subject",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "swagger:walk",
+    "relation": "to swagger is to walk with too much pride",
+    "answer": "brag:speak",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "courage:rashness",
+    "relation": "rashness is defective courage",
+    "answer": "generosity:prodigality",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "moralistic:principled",
+    "relation": "moralistic is to be extremely principled",
+    "answer": "pedantic:learned",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "prudish:propriety",
+    "relation": "prudish is to have extreme propriety",
+    "answer": "finicky:quality",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "aesthetics:beauty",
+    "relation": "aesthetics is a science of beauty",
+    "answer": "epistemology:knowledge",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "ambidextrous:skill",
+    "relation": "ambidextrous is to have excellence skill",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "anachronistic:time",
+    "relation": "anachronistic is to confuse a time with other one",
+    "answer": "discordant:sound",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "anthem:patriotic",
+    "relation": "an anthem is a patriotic song",
+    "answer": "",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "antipathy:dislike",
+    "relation": "antipathy is feeling to dislike ST",
+    "answer": "",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "apprise:information",
+    "relation": "to apprise is to give SB information",
+    "answer": "admonish:warning",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "arbitrate:disputes",
+    "relation": "to arbitrate is to intervene disputes",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "arboreal:trees",
+    "relation": "arboreal is about trees",
+    "answer": "sidereal:stars",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "assignment:position",
+    "relation": "assignment is to give SB a position",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "attorney:disbar",
+    "relation": "to disbar is to kick off an attorney",
+    "answer": "student:expel",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "authorize:approval",
+    "relation": "to authorize is to give SB approval",
+    "answer": "",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "barter:commodities",
+    "relation": "to barter is to exchange commodities",
+    "answer": "correspond:letters",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "bilingual:language",
+    "relation": "bilingual is able to speak two languages",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "burgle:steal",
+    "relation": "to burgle is to steal at night",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "bust:portrait",
+    "relation": "bust is a portrait of the upper part of a man",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "circumference:circle",
+    "relation": "circumference is the length of a circle",
+    "answer": "perimeter:rectangle",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "claim:ligitimated",
+    "relation": "a claim is a demand which is not legitimated",
+    "answer": "hypothesis:confirmed",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "cohabit:reside",
+    "relation": "to cohabit is to reside together",
+    "answer": "conspire:plot",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "coma:consciousness",
+    "relation": "coma is a condition having no consciousness",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "coma:unconsciousness",
+    "relation": "coma is a condition of unconsciousness",
+    "answer": "delirium:confusion",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "commencement:graduate",
+    "relation": "a commencement is a ceremony to graduate",
+    "answer": "",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "condolence:loss",
+    "relation": "condolence is a expression for loss",
+    "answer": "congratulation:success",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "conundrum:solve",
+    "relation": "conundrum is an insoluble problem",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "cower:menace",
+    "relation": "to menace is to make SB cowered",
+    "answer": "",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "croak:frog",
+    "relation": "to croak is crying sound of a frog",
+    "answer": "",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "curiosity:know",
+    "relation": "curiosity is desire to know",
+    "answer": "wanderlust:travel",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "dally:time",
+    "relation": "to dally is to waste time",
+    "answer": "squander:money",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "didactic:instruct",
+    "relation": "didactic is to like to instruct",
+    "answer": "comic:amuse",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "drench:moisture",
+    "relation": "to drench is to have moisture",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "embroider:cloth",
+    "relation": "to embroider is to add an ornament to cloth",
+    "answer": "chase:metal",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "endemic:region",
+    "relation": "endemic is unique to a region",
+    "answer": "inborn:individual",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "evaporate:vapor",
+    "relation": "to evaporate is to change ST into vapors",
+    "answer": "petrify:stone",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "expiate:guilt",
+    "relation": "to expiate is to make amends for guilt",
+    "answer": "correct:error",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "gild:gold",
+    "relation": "to gild is to embellish ST with gold",
+    "answer": "",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "gregariousness:sociability",
+    "relation": "gregariousness is to have sociability",
+    "answer": "affability:friendliness",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "hatch:egg",
+    "relation": "to hatch is to come out of an egg",
+    "answer": "",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "humor:ditty",
+    "relation": "to ditty is to pronounce without humor",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "impede:obstacle",
+    "relation": "an obstacle is ST to impede",
+    "answer": "",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "inoculation:vaccine",
+    "relation": "inoculation is to insert vaccine",
+    "answer": "",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "intimidation:fear",
+    "relation": "intimidation is to fill with fear",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "inventory:stock",
+    "relation": "an inventory is a detailed record of a stock",
+    "answer": "census:population",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "invest:capital",
+    "relation": "capital is money used to invest",
+    "answer": "gamble:stake",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "invitation:guest",
+    "relation": "invitation is to call a guest",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "itinerary:journeys",
+    "relation": "itinerary is a plan of journeys",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "itinerary:trip",
+    "relation": "a itinerary is a detailed plan for a trip",
+    "answer": "syllabus:course",
+    "cite": "etc"
+  },
+  {
+    "analogy": "laudatory:praise",
+    "relation": "laudatory is to express praise same",
+    "answer": "",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "legend:map",
+    "relation": "a legend is a table to list symbols on a map",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "legislature:act",
+    "relation": "legislature is a organization to make acts",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "listen:recording",
+    "relation": "recording is to save what one listen",
+    "answer": "view:photograph",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "logic:reasoning",
+    "relation": "logic is a study of the principles of reasoning",
+    "answer": "ethics:behavior",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "meteorology:weather",
+    "relation": "meteorology is a science of weather",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "mnemonic:memory",
+    "relation": "mnemonic is ST intended to assist the memory",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "nurture:grow",
+    "relation": "to nurture is to make ST grow",
+    "answer": "",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "orchestra:instrumental",
+    "relation": "an orchestra is an instrumental organization",
+    "answer": "choir:vocal",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "pediatrics:children",
+    "relation": "pediatrics deals with diseases of children",
+    "answer": "dermatology:skin",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "perjury:testimony",
+    "relation": "a perjury is an untrue testimony",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "planet:star",
+    "relation": "a planet is illuminated by a star, the Sun",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "plants:deforestation",
+    "relation": "deforestation is to remove plants",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "preempt:precedence",
+    "relation": "to preempt is to take precedence",
+    "answer": "acquire:possession",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "promote:ranks",
+    "relation": "to promote is to raise SB to higher ranks",
+    "answer": "",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "proselytizer:convert",
+    "relation": "to proselytizer is to convert one's religious fait",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "quarry:stone",
+    "relation": "to quarry is to get stone",
+    "answer": "fell:timber",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "rampart:fortress",
+    "relation": "a rampart is a building encircling a fortress",
+    "answer": "fence:house",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "refined:distillate",
+    "relation": "distillate is refined liquid",
+    "answer": "",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "reflection:light",
+    "relation": "reflection is to return light back",
+    "answer": "echo:sound",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "renounce:pledge",
+    "relation": "to renounce is to break a pledge",
+    "answer": "rescind:order",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "retract:statement",
+    "relation": "to retract is to draw back a statement",
+    "answer": "repeal:legislation",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "rope:strand",
+    "relation": "to strand is to cut a rope",
+    "answer": "",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "sermon:homiletics",
+    "relation": "homiletics is a science of sermon",
+    "answer": "argument:logic",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "shed:hair",
+    "relation": "to shed is to cast off hair",
+    "answer": "molt:feather",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "shirk:task",
+    "relation": "to shirk is to avoid doing a task",
+    "answer": "",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "stipple:dot",
+    "relation": "to stipple is to apply in dot",
+    "answer": "striate:band",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "subpoena:witness",
+    "relation": "to subpoena is to call a witness",
+    "answer": "conscript:soldier",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "survival:live",
+    "relation": "survival is to live longer than others",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "synonymous:meaning",
+    "relation": "synonymous is to have same meaning",
+    "answer": "interchangeable:function",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "tornado:air",
+    "relation": "a tornado is a vortex of air",
+    "answer": "whirlpool:water",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "unite:whole",
+    "relation": "to unite is to make whole",
+    "answer": "",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "zoology:animal",
+    "relation": "zoology is a science of animals",
+    "answer": "botany:plant",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "shoulder:roadway",
+    "relation": "shoulder is a border of a roadway",
+    "answer": "margin:page",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "rectangle:square",
+    "relation": "a square is a equilateral rectangle",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "theocracy:state",
+    "relation": "theocracy is a type of a state ruled by religion",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "amble:move",
+    "relation": "to amble is to move slowly",
+    "answer": "",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "apprehension:terror",
+    "relation": "terror is a extreme form of apprehension",
+    "answer": "affection:adoration",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "assert:belabor",
+    "relation": "to belabor is to assert extremely",
+    "answer": "tend:fuss",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "blizzard:snowstorm",
+    "relation": "a blizzard is a strong snowstorm",
+    "answer": "",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "bold:brazen",
+    "relation": "brazen is to bold too much",
+    "answer": "embarrassed:mortified",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "book:tome",
+    "relation": "a tome is a large book",
+    "answer": "story:saga",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "bouquet:flowers",
+    "relation": "a bouquet is a bunch of flowers",
+    "answer": "woodpile:logs",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "castigation:disapproval",
+    "relation": "castigation is strong disapproval",
+    "answer": "blasphemy:irreverence",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "chivalrous:quixotic",
+    "relation": "quixotic is to be very chivalrous",
+    "answer": "disobedient:recalcitrant",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "cold:freezing",
+    "relation": "freezing is to be extremely cold",
+    "answer": "hungry:ravenous",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "color:spectrum",
+    "relation": "spectrum is a progressive series of colors",
+    "answer": "tone:scale",
+    "cite": "etc"
+  },
+  {
+    "analogy": "colossus:figurine",
+    "relation": "colossus is more gigantic than figurine",
+    "answer": "boulder:pebble",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "complain:carp",
+    "relation": "to carp is to complain too much",
+    "answer": "drink:guzzle",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "contract:implode",
+    "relation": "to implode is to contract much",
+    "answer": "descend:plummet",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "crawl:proceed",
+    "relation": "to crawl is to proceed slowly",
+    "answer": "dwindle:decrease",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "creek:river",
+    "relation": "a creek is a small river",
+    "answer": "pebble:rock",
+    "cite": "etc"
+  },
+  {
+    "analogy": "cupidity:desire",
+    "relation": "cupidity is to have excessive desire",
+    "answer": "miserliness:thrifty",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "dart:missile",
+    "relation": "a dart is a slender missile",
+    "answer": "skiff:boat",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "declamation:grandiloquent",
+    "relation": "declamation is ST grandiloquent",
+    "answer": "diatribe:abuse",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "doubt:skepticism",
+    "relation": "skepticism is to have a lot of doubt",
+    "answer": "skill:virtuoso",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "drizzle:cloudburst",
+    "relation": "a cloudburst is a big drizzle",
+    "answer": "fire:conflagration",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "ecstasy:pleasure",
+    "relation": "ecstasy is an extreme form of pleasure",
+    "answer": "rage:anger",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "emigrate:exile",
+    "relation": "to exile is to emigrate compulsorily",
+    "answer": "enlist:conscript",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "entangle:involve",
+    "relation": "to entangle is to involve too much",
+    "answer": "grill:question",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "epic:story",
+    "relation": "an epic is a long story",
+    "answer": "deluge:rain",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "exclamation:statement",
+    "relation": "an exclamation is a statement with strong emotion",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "exhort:suggest",
+    "relation": "to exhort is to suggest acutely",
+    "answer": "goad:direct",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "feud:hostility",
+    "relation": "hostility is extreme feud",
+    "answer": "joy:euphoria",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "fire:inferno",
+    "relation": "inferno is strong fire",
+    "answer": "storm:hurricane",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "firm:ironclad",
+    "relation": "ironclad is to be extremely firm",
+    "answer": "smart:brilliant",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "frugal:miserly",
+    "relation": "miserly is to be very frugal",
+    "answer": "confident:arrogant",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "fulminate:criticize",
+    "relation": "to fulminate is to criticize thunderously",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "garrulous:talkative",
+    "relation": "garrulous is to be very talkative",
+    "answer": "cloying:sweet",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "glaring:bright",
+    "relation": "glaring is to be bright much",
+    "answer": "deafening:loud",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "gravel:pebble",
+    "relation": "a gravel is a big pebble",
+    "answer": "crowd:person",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "grow:burgeon",
+    "relation": "to grow is to burgeon largely",
+    "answer": "beat:palpitate",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "gust:wind",
+    "relation": "a gust is a strong wind",
+    "answer": "cloudburst:rainfall",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "hack:carve",
+    "relation": "to hack is to carve or cut roughly",
+    "answer": "gouge:engrave",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "hurling:tossing",
+    "relation": "hurling is a strong tossing",
+    "answer": "demanding:request",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "importune:request",
+    "relation": "to importune is to beset with repeated requests",
+    "answer": "pry:inquiry",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "inflate:burst",
+    "relation": "to burst is to inflate extremely",
+    "answer": "pull:tear",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "irreverent:blasphemous",
+    "relation": "blasphemous is to be much irreverent",
+    "answer": "disapproving:condemnator",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "jeer:derision",
+    "relation": "derision is to jeer severely",
+    "answer": "reprimand:censure",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "leaflets:posters",
+    "relation": "leaflets are small posters",
+    "answer": "",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "lionize:admire",
+    "relation": "to admire is to lionize too much",
+    "answer": "vituperate:despise",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "livid:angry",
+    "relation": "livid is to be extremely angry",
+    "answer": "",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "loathsome:contempt",
+    "relation": "loathsome is extreme contempt",
+    "answer": "meritorious:esteem",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "lope:run",
+    "relation": "to lope is to run slowly",
+    "answer": "drawl:speak",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "loquacity:talk",
+    "relation": "loquacity is to talk too much",
+    "answer": "gluttony:eat",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "moisten:drench",
+    "relation": "to drench is to moisten heavily",
+    "answer": "chill:freeze",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "mountain:hill",
+    "relation": "a mountain is a large hill",
+    "answer": "hurricane:breeze",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "move:scurry",
+    "relation": "to scurry is to move quickly",
+    "answer": "breathe:pant",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "noise:din",
+    "relation": "din is a great noise",
+    "answer": "celebration:revelry",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "nuance:distinction",
+    "relation": "nuance is a small distinction",
+    "answer": "hint:suggestion",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "oath:promise",
+    "relation": "oath is a extreme form of a promise",
+    "answer": "contract:agreement",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "offense:peccadillo",
+    "relation": "peccadillo is a small offense",
+    "answer": "quarrel:tiff",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "paranoid:suspicion",
+    "relation": "paranoid is to have much suspicion",
+    "answer": "",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "pebble:rock",
+    "relation": "a pebble is a small rock",
+    "answer": "minnow:fish",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "peccadillo:offensive",
+    "relation": "peccadillo is less offensive",
+    "answer": "quarrel:tiff",
+    "cite": "etc"
+  },
+  {
+    "analogy": "peccadillo:sin",
+    "relation": "a peccadillo is a small sin",
+    "answer": "admonishment:castigation",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "perspicacious:discerning",
+    "relation": "perspicacious is able to be discerning much",
+    "answer": "sycophantic:complimentar",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "pit:abyss",
+    "relation": "an abyss is a extreme pit",
+    "answer": "defeat:rout",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "pleasure:ecstasy",
+    "relation": "ecstasy is extreme pleasure",
+    "answer": "surprise:astonishment",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "plummet:fall",
+    "relation": "to plummet is fall straight down",
+    "answer": "swerve:turn",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "prodigality:spending",
+    "relation": "prodigality is to have a lot of spending",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "prune:dwarf",
+    "relation": "to prune is to dwarf too much",
+    "answer": "",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "quaff:sip",
+    "relation": "to quaff is to sip much at a time",
+    "answer": "stride:mince",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "quixotic:idealistic",
+    "relation": "quixotic is to be more idealistic",
+    "answer": "touchy:sensitive",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "ravishing:attractive",
+    "relation": "ravishing is to be extremely attractive",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "redoubtable:awe",
+    "relation": "redoubtable is to have a lot of awe",
+    "answer": "dispicable:contempt",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "relevant:crucial",
+    "relation": "crucial is to be extremely relevant",
+    "answer": "perceptible:obvious",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "resoluteness:will",
+    "relation": "resoluteness is to have strong will",
+    "answer": "zeal:conviction",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "river:stream",
+    "relation": "a stream is a small river",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "school:fish",
+    "relation": "a school is a group of fish",
+    "answer": "flock:birds",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "scorn:contempt",
+    "relation": "to contempt is to scorn extremely",
+    "answer": "",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "sensitization:allergic",
+    "relation": "allergic is to have much sensitization",
+    "answer": "habituation:inured",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "sip:guzzle",
+    "relation": "to guzzle is to sip/drink much",
+    "answer": "talk:garrulous",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "stygian:dark",
+    "relation": "stygian is to be very dark",
+    "answer": "abysmal:low",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "suspicious:paranoid",
+    "relation": "paranoid is to be very suspicious",
+    "answer": "admiring:idolatrous",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "svelte:emaciated",
+    "relation": "emaciated is to be very svelte",
+    "answer": "large:gargantuan",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "talkativeness:loquacity",
+    "relation": "loquacity is very talkative",
+    "answer": "hunger:ravenousness",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "tepid:scalding",
+    "relation": "scalding is to be very tepid",
+    "answer": "cool:frozen",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "tiff:battle",
+    "relation": "a battle is a extreme form of a tiff",
+    "answer": "dampening:saturation",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "trickle:gush",
+    "relation": "to gush is to be trickle too much",
+    "answer": "warm:sear",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "twig:branch",
+    "relation": "a twig is a small branch",
+    "answer": "",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "upbraid:reproach",
+    "relation": "to upbraid is to reproach severely",
+    "answer": "dote:like",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "verbosity:words",
+    "relation": "verbosity is to have too many words",
+    "answer": "floridness:embellishments",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "virtuosity:skill",
+    "relation": "virtuosity is great technical skill",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "zealous:enthusiastic",
+    "relation": "zealous is to be extremely enthusiastic",
+    "answer": "idolatrous:devoted",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "compliant:servile",
+    "relation": "servile is to be compliant defectively",
+    "answer": "trusting:gullible",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "esteem:adoration",
+    "relation": "adoration is extreme esteem",
+    "answer": "enthusiasm:mania",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "frugal:penurious",
+    "relation": "penurious is to be frugal too much",
+    "answer": "compliant:obsequious",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "troubled:distraught",
+    "relation": "distraught is to be more troubled",
+    "answer": "covetous:rapacious",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "allergy:reaction",
+    "relation": "?",
+    "answer": "lancet:instrument",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "astringent:pucker",
+    "relation": "?",
+    "answer": "spark:ignition",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "coin:denomination",
+    "relation": "?",
+    "answer": "officer:rank",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "embarrass:mortify",
+    "relation": "?",
+    "answer": "indulge:mollycoddle",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "grazing:foragers",
+    "relation": "?",
+    "answer": "stalking:hunters",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "hammer:anvil",
+    "relation": "?",
+    "answer": "pestle:mortar",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "overdose:prescription",
+    "relation": "?",
+    "answer": "indiscretion:convention",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "pitch:sound",
+    "relation": "?",
+    "answer": "color:light",
+    "cite": "24-2/2"
+  },
+  {
+    "analogy": "pluck:quit",
+    "relation": "?",
+    "answer": "pride:grovel",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "propagandize:principles",
+    "relation": "?",
+    "answer": "proselytize:religion",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "request:command",
+    "relation": "?",
+    "answer": "propose:stipulate",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "ruffle:shirt",
+    "relation": "?",
+    "answer": "molding:cabinet",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "skirmish:insignificance",
+    "relation": "?",
+    "answer": "duel:formality",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "stream:eddy",
+    "relation": "?",
+    "answer": "trend:anomaly",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "apologize:contrite",
+    "relation": "if you are contrite, you will apologize",
+    "answer": "compliment:impressed",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "audible:hear",
+    "relation": "if ST is audible, we can hear it",
+    "answer": "edible:eat",
+    "cite": "etc"
+  },
+  {
+    "analogy": "canned:preserves",
+    "relation": "if ST is canned, it will be preserved",
+    "answer": "ephemeral:perish",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "cogent:convince",
+    "relation": "if you are cogent, you can convince SB",
+    "answer": "repugnant:dispel",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "culpable:blame",
+    "relation": "if SB is culpable, he will be blamed",
+    "answer": "",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "educable:learn",
+    "relation": "if SO is educable, he can learn",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "enfranchise:vote",
+    "relation": "if you are enfranchised, you can vote",
+    "answer": "illuminate:see",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "evanescent:disappear",
+    "relation": "if ST is evanescent, it disappears easily",
+    "answer": "pliant:yield",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "exercise:strong",
+    "relation": "if you exercise hard, you will be strong",
+    "answer": "read:knowledgeable",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "fragile:break",
+    "relation": "if ST is fragile, it breaks easily",
+    "answer": "flammable:burn",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "gush:effusive",
+    "relation": "if ST is effusive, it can easily gush",
+    "answer": "rage:irate",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "hear:inaudible",
+    "relation": "if ST inaudible, it is not able to hear",
+    "answer": "touch:intangible",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "inaudible:sound",
+    "relation": "if ST is inaudible, you can not hear sound",
+    "answer": "",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "indistinguishable:confound",
+    "relation": "if ST is indistinguishable, it can be confounded",
+    "answer": "equivalent:interchange",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "invisible:see",
+    "relation": "if ST is invisible, you can not see",
+    "answer": "slippery:grasp",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "lien:claim",
+    "relation": "if you have a lien, you can claim",
+    "answer": "subpoena:command",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "opaque:light",
+    "relation": "if ST is opaque, light can not pass through it",
+    "answer": "nonporous:liquid",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "palpable:touch",
+    "relation": "If ST is palpable, you can touch it",
+    "answer": "discernible:see",
+    "cite": "etc"
+  },
+  {
+    "analogy": "potable:drink",
+    "relation": "if ST is potable, we can drink it",
+    "answer": "portable:carry",
+    "cite": "etc"
+  },
+  {
+    "analogy": "tangled:know",
+    "relation": "if ST is tangled, it is hard to know it",
+    "answer": "obscured:recognize",
+    "cite": "etc"
+  },
+  {
+    "analogy": "tenacity:resign",
+    "relation": "if SO has tenacity, he does not eagerly resign",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "accidental:intention",
+    "relation": "accidental is to have no intention",
+    "answer": "voluntary:requirement",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "alien:citizenship",
+    "relation": "an alien does not have citizenship",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "amorphousness:definition",
+    "relation": "amorphousness lacks definition",
+    "answer": "lassitude:energy",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "anemia:blood",
+    "relation": "anemia is a symptom lacking blood",
+    "answer": "",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "arid:moisture",
+    "relation": "arid is to lack moisture",
+    "answer": "bankrupt:fund",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "austerity:ornamentation",
+    "relation": "austerity lacks ornamentation",
+    "answer": "recklessness:caution",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "banality:freshness",
+    "relation": "banality lacks freshness",
+    "answer": "starvation:nutrition",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "charade:word",
+    "relation": "charade is made without word",
+    "answer": "mime:story",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "decelerate:speed",
+    "relation": "to decelerate is to reduce its speed",
+    "answer": "enervate:vitality",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "delirium:sense",
+    "relation": "delirium lacks sense",
+    "answer": "perjury:truth",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "extenuate:guilty",
+    "relation": "to extenuate is to lessen one's guilt",
+    "answer": "",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "flag:vigor",
+    "relation": "to flag is to lack vigor",
+    "answer": "waver:resolution",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "flaw:perfection",
+    "relation": "perfection is to have no flaw",
+    "answer": "companionship:hermit",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "flip:respect",
+    "relation": "flip is to lack respect",
+    "answer": "nonchalant:concern",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "headlong:forethought",
+    "relation": "headlong is to lack forethought",
+    "answer": "barefaced:shame",
+    "cite": "etc"
+  },
+  {
+    "analogy": "identity:anonymity",
+    "relation": "anonymity is to lack identity",
+    "answer": "domicile:vagrancy",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "indolent:activity",
+    "relation": "indolent is to lack activity",
+    "answer": "trivial:significance",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "indolent:verve",
+    "relation": "indolent is to lack verve",
+    "answer": "discursive:coherent",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "insipid:invention",
+    "relation": "insipid is to lack invention",
+    "answer": "prosaic:imagination",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "interregnum:government",
+    "relation": "interregnum is period lacking government",
+    "answer": "hibernation:activity",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "latency:response",
+    "relation": "latency lacks direct responses",
+    "answer": "incubation:disease",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "lumber:grace",
+    "relation": "to lumber is to behave without grace",
+    "answer": "waver:resolution",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "maladroit:skill",
+    "relation": "maladroit is to lack of skill",
+    "answer": "glib:profundity",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "melodrama:subtlety",
+    "relation": "melodrama lacks subtlety",
+    "answer": "chimera:authenticity",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "mitigate:severe",
+    "relation": "to mitigate is to be less severe",
+    "answer": "qualify:general",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "naive:sophistication",
+    "relation": "naive is to lack sophistication",
+    "answer": "erratic:consistency",
+    "cite": "etc"
+  },
+  {
+    "analogy": "negligence:care",
+    "relation": "negligence lacks care",
+    "answer": "delinquency:timeliness",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "neophyte:experience",
+    "relation": "a neophyte a person who lacks experience",
+    "answer": "boor:sensitivity",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "nil:quantity",
+    "relation": "nil is to have no quantity",
+    "answer": "vacuum:matter",
+    "cite": "etc"
+  },
+  {
+    "analogy": "pallor:color",
+    "relation": "pallor lacks color",
+    "answer": "myth:reality",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "rain:drought",
+    "relation": "drought lacks rain",
+    "answer": "hope:pessimism",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "shallow:depth",
+    "relation": "shallow is to lack depth",
+    "answer": "apathetic:caring",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "speak:reticent",
+    "relation": "reticent means to speak less",
+    "answer": "spend:parsimonious",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "suffocate:oxygen",
+    "relation": "to be suffocated is to lack oxygen",
+    "answer": "starve:nutrients",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "tact:offensive",
+    "relation": "offensive people lack tact",
+    "answer": "money:poor",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "tenuous:substance",
+    "relation": "tenuous is to lack substance",
+    "answer": "treacherous:trust",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "text:extemporize",
+    "relation": "to extemporize is to be made without a text",
+    "answer": "score:improvise",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "torpid:motion",
+    "relation": "torpid is to lack motion",
+    "answer": "poor:money",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "transgression:morality",
+    "relation": "transgression is to lack morality",
+    "answer": "presumption:propriety",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "unconcerned:interest",
+    "relation": "unconcerned is to lack interest",
+    "answer": "exhausted:energy",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "vacuum:air",
+    "relation": "vacuum is a state of lacking air",
+    "answer": "vacancy:occupant",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "absorb:sponge",
+    "relation": "sponge is material to absorb",
+    "answer": "seal:caulk",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "antihistamine:allergies",
+    "relation": "antihistamine is used to cure allergies",
+    "answer": "drug:diseases",
+    "cite": "etc"
+  },
+  {
+    "analogy": "astringent:contraction",
+    "relation": "an astringent material for contraction",
+    "answer": "anesthetic:insensibility",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "bacteria:decomposition",
+    "relation": "bacteria is an organism to help decomposition",
+    "answer": "yeast:fermentation",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "bandage:wound",
+    "relation": "bandage is material used for wound",
+    "answer": "medicine:treatment",
+    "cite": "11-3/1"
+  },
+  {
+    "analogy": "bird:feathers",
+    "relation": "a bird is covered with feathers",
+    "answer": "fish:scales",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "brick:building",
+    "relation": "a brick is material of a building",
+    "answer": "leather:shoe",
+    "cite": "10-4/1"
+  },
+  {
+    "analogy": "butter:margarine",
+    "relation": "margarine is artificial butter",
+    "answer": "sugar:saccharin",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "calcium:bone",
+    "relation": "calcium is material consisting of bone",
+    "answer": "protein:meat",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "candle:wax",
+    "relation": "wax is a material consisting of candle",
+    "answer": "tire:rubber",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "canvas:painter",
+    "relation": "a canvas is material used by a painter",
+    "answer": "marble:sculptor",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "caustic:eat",
+    "relation": "away caustic is material to eat away",
+    "answer": "desiccant:dry",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "clay:porcelain",
+    "relation": "clay is material of porcelain",
+    "answer": "flax:linen",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "electricity:wives",
+    "relation": "electricity is sent through wires",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "enzyme:digestion",
+    "relation": "enzyme is material to help digestion",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "filigree:wire",
+    "relation": "a filigree is an ornament made with wires",
+    "answer": "lace:thread",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "filing:metal",
+    "relation": "filing is byproduct when metal is cut",
+    "answer": "shaving:wood",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "foil:metal",
+    "relation": "foil is a thin surface layer of metal",
+    "answer": "veneer:wood",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "food:nourish",
+    "relation": "food is material to nourish",
+    "answer": "antibodies:protect",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "glaze:pottery",
+    "relation": "glaze is material to make a pottery brilliant",
+    "answer": "",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "glue:attaching",
+    "relation": "glue is material used in attaching",
+    "answer": "ink:printing",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "honey:bee",
+    "relation": "honey is material made be a bee",
+    "answer": "",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "host:parasite",
+    "relation": "a parasite grows through host",
+    "answer": "medium:bacterium",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "itinerary:trip(2)",
+    "relation": "an itinerary is the schedule of a trip",
+    "answer": "agenda:meeting",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "knit:yarn",
+    "relation": "yarn is material to knit",
+    "answer": "plait:hair",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "meeting:minutes",
+    "relation": "minutes is documents for a meeting",
+    "answer": "sale:deed",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "nicotine:tobacco",
+    "relation": "nicotine is a harmful material in tobacco",
+    "answer": "caffein:coffee",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "parquet:wood",
+    "relation": "wood is material of parquet",
+    "answer": "mosaic:glass",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "pigment:color",
+    "relation": "pigment is material which makes color",
+    "answer": "spice:flavor",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "plant:fertilizer",
+    "relation": "fertilizer is nourishment for a plant",
+    "answer": "animal:food",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "prodigy:wonder",
+    "relation": "a prodigy is ST which makes SB wonder",
+    "answer": "",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "score:symphony",
+    "relation": "a score is a written instruction for a symphony",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "script:drama",
+    "relation": "a script is a written instruction for a drama",
+    "answer": "score:symphony",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "script:play",
+    "relation": "a script is a written instruction for a play",
+    "answer": "score:symphony",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "scroll:book",
+    "relation": "a book is made of scroll",
+    "answer": "parchment:paper",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "skeleton:animal",
+    "relation": "a skeleton is a structure supporting an animal",
+    "answer": "framing:building",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "sound:air",
+    "relation": "air is media to carry sound",
+    "answer": "electricity:copper",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "syllabus:course",
+    "relation": "a syllabus is the plan of a course",
+    "answer": "agenda:meeting",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "symbols:rebus",
+    "relation": "symbols is used to represent rebus",
+    "answer": "notes:score",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "tablecloth:table",
+    "relation": "a tablecloth covers a table",
+    "answer": "sheet:mattress",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "tile:mosaic",
+    "relation": "tile is material of mosaic",
+    "answer": "stitch:sampler",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "upholstery:sofa",
+    "relation": "upholstery is material to cover a sofa",
+    "answer": "",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "varnish:wood",
+    "relation": "varnish is material which make wood waterproof",
+    "answer": "wax:linoleum",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "venom:toxin",
+    "relation": "venom is material which can be toxin",
+    "answer": "milk:nutrient",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "wall:brick",
+    "relation": "a brick is material to build a wall",
+    "answer": "",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "wind:kite",
+    "relation": "a kite can fly by using wind",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "worship:sacrifice",
+    "relation": "sacrifice is used to worship",
+    "answer": "prediction:augury",
+    "cite": "etc"
+  },
+  {
+    "analogy": "stone:sculptor",
+    "relation": "a sculptor make artworks out of stones words: poet",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "analgesic:pain",
+    "relation": "an analgesic is a meditation to lessen pain",
+    "answer": "",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "aberrant:norm",
+    "relation": "aberrant is not to follow a norm",
+    "answer": "",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "adulterate:purity",
+    "relation": "to adulterate is to lessen purity",
+    "answer": "enervate:vigor",
+    "cite": "CYB"
+  },
+  {
+    "analogy": "anomaly:paradigmatic",
+    "relation": "paradigmatic is opposite to being anomaly",
+    "answer": "blemish:flawless",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "anonymous:identity",
+    "relation": "anonymous is to have no identity",
+    "answer": "amorphous:form",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "atrophy:rehabilitation",
+    "relation": "to atrophy is opposite to rehabilitation",
+    "answer": "",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "attentive:officious",
+    "relation": "attentive is opposite to being officious",
+    "answer": "refined:snobbish",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "audacious:trepidation",
+    "relation": "audacious is opposite to trepidation",
+    "answer": "laconic:volubility",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "basement:attic",
+    "relation": "a basement is located opposite side of an attic",
+    "answer": "",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "boundless:limit",
+    "relation": "boundless is opposite to limit",
+    "answer": "impeccable:flaw",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "buoyant:sink",
+    "relation": "buoyant is not to sink easily",
+    "answer": "insoluble:dissolve",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "calmness:fret",
+    "relation": "to fret is opposite to calmness",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "certainty:doubtful",
+    "relation": "certainty is not to be doubtful",
+    "answer": "gullibility:skeptical",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "circumspect:recklessness",
+    "relation": "circumspect is opposite to recklessness",
+    "answer": "",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "clot:dissolved",
+    "relation": "a clot is ST not dissolved",
+    "answer": "crowd:dispersed",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "corroborate:falsification",
+    "relation": "to corroborate is opposite to falsification",
+    "answer": "",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "crave:accept",
+    "relation": "to crave is opposite to accepting",
+    "answer": "",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "crouch:spring",
+    "relation": "to crouch is opposite to springing",
+    "answer": "contaminate:purge",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "dilapidated:construction",
+    "relation": "dilapidated is opposite to construction",
+    "answer": "haste:procrastination",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "dilate:contraction",
+    "relation": "to dilate is opposite to contraction",
+    "answer": "",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "disabuse:error",
+    "relation": "to disabuse is to correct an error",
+    "answer": "rehabilitate:addiction",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "discordant:harmonious",
+    "relation": "discordant is opposite to being harmonious",
+    "answer": "",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "embellish:austere",
+    "relation": "to embellish is opposite to being austere",
+    "answer": "adulterate:pure",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "encomium:criticism",
+    "relation": "encomium is opposite to criticism",
+    "answer": "invective:compliment",
+    "cite": "11-3/1"
+  },
+  {
+    "analogy": "engrossing:obliviousness",
+    "relation": "engrossing is opposite to obliviousness",
+    "answer": "",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "enriched:impoverished",
+    "relation": "enriched is opposite to being impoverished",
+    "answer": "permanent:transitory",
+    "cite": "etc"
+  },
+  {
+    "analogy": "escape:capture",
+    "relation": "to escape is opposite to capturing",
+    "answer": "dodge:blow",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "eternal:end",
+    "relation": "eternal is not to end",
+    "answer": "young:mature",
+    "cite": "etc"
+  },
+  {
+    "analogy": "ethical:unscrupulous",
+    "relation": "ethical is opposite to being unscrupulous",
+    "answer": "",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "eviction:reside",
+    "relation": "eviction is opposite to residing",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "exorbitant:moderation",
+    "relation": "exorbitant is opposite to moderation",
+    "answer": "perfidious:loyalty",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "extinguished:refit",
+    "relation": "to refit is to recover ST extinguished",
+    "answer": "collapsed:rebuilt",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "fawn:imperiousness",
+    "relation": "to fawn is opposite to imperiousness",
+    "answer": "equivocate:directness",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "fearless:daunt",
+    "relation": "fearless is opposite to being daunt",
+    "answer": "impassive:perturb",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "flow:ebb",
+    "relation": "flow is opposite to ebb",
+    "answer": "ground:sky",
+    "cite": "14-1/1"
+  },
+  {
+    "analogy": "forgiveness:punish",
+    "relation": "to punish is opposite to forgiveness",
+    "answer": "ignition:extinguish",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "frozen:melt",
+    "relation": "frozen is opposite to melting",
+    "answer": "",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "illusory:exist",
+    "relation": "illusory is not to exist",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "implacable:appease",
+    "relation": "to appease is opposite to being implacable",
+    "answer": "indomitable:subdue",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "implacable:compromise",
+    "relation": "to compromise is opposite to being implacable",
+    "answer": "honest:swindle",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "indelibility:erasure",
+    "relation": "indelibility is opposite to erasure",
+    "answer": "impermeability:passage",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "ineffable:express",
+    "relation": "ineffable is not to be expressed",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "inevitable:chance",
+    "relation": "inevitable is opposite to chance",
+    "answer": "absolute:variability",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "introduction:conclusion",
+    "relation": "introduction is opposite to conclusion",
+    "answer": "salutation:farewell",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "invincible:subdued",
+    "relation": "invincible is opposite to being subdued",
+    "answer": "impervious:damaged",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "irrationality:sanity",
+    "relation": "irrationality is opposite to sanity",
+    "answer": "",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "know:ignorance",
+    "relation": "to know is opposite to ignorance",
+    "answer": "breathe:suffocation",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "metaphor:literal",
+    "relation": "mataphor is not literal expression",
+    "answer": "melody:spoken",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "multiply:divide",
+    "relation": "to multiply is opposite to dividing",
+    "answer": "enter:leave",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "pacifism:bellicose",
+    "relation": "pacifism is opposite to being bellicose",
+    "answer": "profligate:restraint",
+    "cite": "etc"
+  },
+  {
+    "analogy": "perfunctorily:inspiration",
+    "relation": "perfunctorily is to have no inspiration",
+    "answer": "insolently:veneration",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "peripheral:central",
+    "relation": "peripheral is opposite to being central",
+    "answer": "whimsical:steady",
+    "cite": "07-1/0"
+  },
+  {
+    "analogy": "prominent:notoriety",
+    "relation": "prominent is to be opposite to notoriety",
+    "answer": "",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "queries:answers",
+    "relation": "queries are opposite to answers",
+    "answer": "",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "recovery:relapse",
+    "relation": "relapse is opposite to recovery",
+    "answer": "oblivious:awareness",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "renege:promise",
+    "relation": "to renege is not to keep promise",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "reputation:disrepute",
+    "relation": "disrepute is bad reputation",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "rescind:law",
+    "relation": "to rescind is to cancel a law",
+    "answer": "withdraw:candidacy",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "ruthless:mercy",
+    "relation": "ruthless is to have no mercy",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "sneer:respect",
+    "relation": "to sneer is opposite to respecting",
+    "answer": "",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "specious:genuineness",
+    "relation": "specious is opposite to genuineness",
+    "answer": "illusory:reality",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "temper:extreme",
+    "relation": "temper is opposite to extreme",
+    "answer": "mitigatation:severeness",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "terseness:superfluous",
+    "relation": "terseness is opposite to being superfluous",
+    "answer": "spontaneity:studied",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "truce:warfare",
+    "relation": "truce is opposite to warfare",
+    "answer": "relaxation:tension",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "untenable:defended",
+    "relation": "untenable is opposite to being defended",
+    "answer": "invulnerable:injured",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "untenable:defended(2)",
+    "relation": "untenable is not to be defended",
+    "answer": "inevitable:avoided",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "urbane:gaucherie",
+    "relation": "gaucherie is opposite to being urbanity",
+    "answer": "guileless:chicanery",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "waft:plummet",
+    "relation": "to waft is opposite to plummeting",
+    "answer": "meander:dash",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "wary:gulled",
+    "relation": "wary is opposite to being gulled",
+    "answer": "vigilant:ambushed",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "impregnable:attack",
+    "relation": "if ST is impregnable, it is hard to attack it",
+    "answer": "occluded:reveal",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "appetizer:dessert",
+    "relation": "appetizer is opposite to dessert",
+    "answer": "prolog:epilog",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "body:toe",
+    "relation": "a toe is a part of a body",
+    "answer": "hand:finger",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "branch:tree",
+    "relation": "a branch is a part of a tree",
+    "answer": "arm:human",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "chandelier:candle",
+    "relation": "a candle is a part of a chandelier",
+    "answer": "",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "chapter:novel",
+    "relation": "a chapter is a part of a novel",
+    "answer": "chapter:book",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "choir:singer",
+    "relation": "a singer is a part of a choir",
+    "answer": "cast:actor",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "clientele:customers",
+    "relation": "clientele is a group of customers",
+    "answer": "faculty:teachers",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "cow:herd",
+    "relation": "a cow is a part of a herd",
+    "answer": "violinist:orchestra",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "crest:wave",
+    "relation": "a crest is a part of a wave",
+    "answer": "branch:tree",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "deluge:droplet",
+    "relation": "a droplet is a part of a deluge",
+    "answer": "landslide:pebble",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "fang:snake",
+    "relation": "a fang is a pointed tooth of a snake",
+    "answer": "tusk:elepant",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "forest:trees",
+    "relation": "trees are parts of forest",
+    "answer": "fleet:ships",
+    "cite": "06-2/2"
+  },
+  {
+    "analogy": "gadgets:tool",
+    "relation": "gadgets are parts of a tool",
+    "answer": "trinkets:jewelry",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "glacier:ice",
+    "relation": "ice is a part of a glacier",
+    "answer": "",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "letter:alphabet",
+    "relation": "a letter is a part of alphabet",
+    "answer": "chapter:novel",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "lid:jar",
+    "relation": "a lid is a part of a jar; a lid covers a jar",
+    "answer": "",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "maize:cob",
+    "relation": "cob is inner part of a maize",
+    "answer": "",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "mast:ship",
+    "relation": "a mast is a part of a ship",
+    "answer": "bow:cello",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "matrix:numbers",
+    "relation": "matrix is an arranged set of numbers",
+    "answer": "crystal:atoms",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "melody:song",
+    "relation": "melody is a part of a song",
+    "answer": "",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "mountain:range",
+    "relation": "a mountain is a part of a range",
+    "answer": "shot:volley",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "needle:pine",
+    "relation": "a pine has a needle-shaped leaf",
+    "answer": "leaf:oak",
+    "cite": "etc"
+  },
+  {
+    "analogy": "petal:flower",
+    "relation": "a petal is a part of a flower",
+    "answer": "",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "poem:anthology",
+    "relation": "a poem is a part of an anthology",
+    "answer": "goose:gaggle",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "pollen:flower",
+    "relation": "a pollen is a part of a flower",
+    "answer": "",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "portfolio:securities",
+    "relation": "securities are parts of portfolio",
+    "answer": "dossier:reports",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "pottery:shard",
+    "relation": "a shard is a broken fragment of a pottery",
+    "answer": "bread:crumb",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "quill:porcupine",
+    "relation": "a porcupine has long and sharp quills",
+    "answer": "",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "shard:pottery",
+    "relation": "a shard is a broken part of a pottery",
+    "answer": "fragment:bone",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "singer:choir",
+    "relation": "a singer is a part of a choir",
+    "answer": "flower:bouquet",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "singer:chorus",
+    "relation": "a singer is a part of a chorus",
+    "answer": "actor:cast",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "soldier:army",
+    "relation": "a soldier is a part of an army",
+    "answer": "element:compound",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "stanza:poem",
+    "relation": "a stanza is a part of a poem",
+    "answer": "act:opera",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "star:galaxy",
+    "relation": "a star is a part of a galaxy",
+    "answer": "note:scale",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "talon:eagle",
+    "relation": "talon is a claw of a eagle",
+    "answer": "claw:panther",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "tread:tire",
+    "relation": "tread is a part of a tire",
+    "answer": "gargoyle:edifice",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "tree:root",
+    "relation": "a root is a part of a tree",
+    "answer": "",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "trunk:tree",
+    "relation": "a trunk is a part of a tree",
+    "answer": "root:plant",
+    "cite": "06-1/2"
+  },
+  {
+    "analogy": "vein:organ",
+    "relation": "vein is a part of an organ",
+    "answer": "skull:skelton",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "verse:stanza",
+    "relation": "a stanza is a part of a verse",
+    "answer": "",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "wick:candle",
+    "relation": "a wick is a core part of a candle",
+    "answer": "",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "advice:counselor",
+    "relation": "a counselor gives advice",
+    "answer": "contribution:donor",
+    "cite": "etc"
+  },
+  {
+    "analogy": "anxiety:pessimistic",
+    "relation": "a pessimist has a lot of anxiety",
+    "answer": "",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "apostate:belief",
+    "relation": "an apostate is someone who abandons belief",
+    "answer": "deserter:duty",
+    "cite": "etc"
+  },
+  {
+    "analogy": "ascetic:temperance",
+    "relation": "an ascetic seeks temperance",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "assassination:murderers",
+    "relation": "murderers commit assassination secretly",
+    "answer": "",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "athlete:trophy",
+    "relation": "a winning athlete gets a trophy",
+    "answer": "soldier:medal",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "authoritativeness:pundits",
+    "relation": "pundits are people of authoritativeness",
+    "answer": "allegiance:partisans",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "bettor:stake",
+    "relation": "a bettor has an eye on stake",
+    "answer": "",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "bilk:cheat",
+    "relation": "a bilk is a person who cheat SB",
+    "answer": "",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "blowhard:boastful",
+    "relation": "a blowhard is a person who is boastful",
+    "answer": "toady:obsequious",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "bodyguard:person",
+    "relation": "a bodyguard takes care of a person",
+    "answer": "soldier:country",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "building:architect",
+    "relation": "an architect is a person who makes buildings",
+    "answer": "",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "cartographer:maps",
+    "relation": "a cartographer is a person who makes maps",
+    "answer": "",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "choreographer:ballet",
+    "relation": "a choreographer is a person who prepares ballet",
+    "answer": "",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "collusion:conspirators",
+    "relation": "conspirators are people make a collusion",
+    "answer": "cooperation:partners",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "coward:craven",
+    "relation": "a coward is a person who is craven",
+    "answer": "dupe:gullible",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "credulous:dupe",
+    "relation": "a dupe is a person who is credulous",
+    "answer": "insensitive:boor",
+    "cite": "etc"
+  },
+  {
+    "analogy": "curator:art",
+    "relation": "a curator is a person who deal with art",
+    "answer": "archivist:documents",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "dawdler:toil",
+    "relation": "a dawdler is a person who does not like to toil",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "defy:mutineer",
+    "relation": "a mutineer is a person who defies",
+    "answer": "",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "dentist:tooth",
+    "relation": "a dentist is a doctor who takes care of a tooth",
+    "answer": "cardiologist:heart",
+    "cite": "etc"
+  },
+  {
+    "analogy": "dermatologist:skin",
+    "relation": "a dermatologist treats diseases of skin",
+    "answer": "podiatrist:feet",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "diplomat:tact",
+    "relation": "a diplomat is a person of tact",
+    "answer": "inventor:ingenuity",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "dogma:iconoclast",
+    "relation": "an iconoclast resists against dogma",
+    "answer": "convention:maverick",
+    "cite": "etc"
+  },
+  {
+    "analogy": "doubt:skeptic",
+    "relation": "a skeptic is a person who usually has doubt",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "drill:recruits",
+    "relation": "drill is especially needed for recruits",
+    "answer": "",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "faultfinder:criticize",
+    "relation": "a faultfinder is a person who criticize",
+    "answer": "arbitrator:mediate",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "fervor:zealot",
+    "relation": "a zealot is a person who has fervor",
+    "answer": "improvidence:spendthrift",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "flowers:florist",
+    "relation": "a florist is a person who sells flowers",
+    "answer": "ring:jewer",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "gourmand:appetite",
+    "relation": "a gourmand is a person who has great appetite",
+    "answer": "skinflint:thrift",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "hedonist:pleasure",
+    "relation": "a hedonist is a person who seeks pleasure",
+    "answer": "recluse:privacy",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "hermit:solitude",
+    "relation": "a hermit likes to live with solitude",
+    "answer": "ascetic:self-denial",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "humility:supplicant",
+    "relation": "a supplicant has humility",
+    "answer": "resistance:adversary",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "jockey:horse",
+    "relation": "a jockey is a person who rides a horse",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "lapidary:gems",
+    "relation": "a lapidary is a person who collects gems",
+    "answer": "numismatist:coins",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "lawyer:client",
+    "relation": "a client is a customer of a lawyer",
+    "answer": "doctor:patient",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "librarian:book",
+    "relation": "a librarian takes care of books",
+    "answer": "",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "malingerer:duty",
+    "relation": "a malingerer avoids his duty",
+    "answer": "recluse:humanity",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "maverick:conformity",
+    "relation": "a maverick is a person who lacks conformity",
+    "answer": "extrovert:reserve",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "maverick:stray",
+    "relation": "a maverick is a person who likes to stray",
+    "answer": "hermit:recluse",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "mechanic:tool",
+    "relation": "a mechanic works with his tool",
+    "answer": "architect:blueprint",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "miller:grain",
+    "relation": "a miller is a person who processes grain",
+    "answer": "tanner:hide",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "misanthrope:people",
+    "relation": "a misanthrope is a person who dislikes people",
+    "answer": "xenophobe:strangers",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "miscreant:evil",
+    "relation": "a miscreant is a person of evil",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "miser:money",
+    "relation": "a miser hoards money frenetically",
+    "answer": "squirrel:nuts",
+    "cite": "etc"
+  },
+  {
+    "analogy": "miser:stingy",
+    "relation": "a miser is a stingy person",
+    "answer": "loner:solitary",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "miser:thrift",
+    "relation": "a miser is a person of thrift",
+    "answer": "chauvinist:patriotism",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "miser:wealth",
+    "relation": "a miser continuously hoards wealth",
+    "answer": "",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "murder:life",
+    "relation": "a murder is to take one's life merciless",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "neophyte:experience(2)",
+    "relation": "a neophyte is a person who lacks experience",
+    "answer": "invaild:health",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "nominal:figurehead",
+    "relation": "a figurehead has a nominal position",
+    "answer": "absolute:autocrat",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "orchestra:music",
+    "relation": "music is made by orchestra",
+    "answer": "troupe:drama",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "pariah:scorn",
+    "relation": "a pariah are people who deserve scorn",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "pauper:wealth",
+    "relation": "a pauper is a person who lacks wealth",
+    "answer": "",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "pawnbroker:jewlry",
+    "relation": "a pawnbroker keeps jewelry and lends money",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "pest:irksome",
+    "relation": "a pest is a person who is irksome",
+    "answer": "expert:proficient",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "philanthropist:benevolence",
+    "relation": "a philanthropist is a person of benevolence",
+    "answer": "pundit:knowledge",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "philatelist:stamps",
+    "relation": "a philatelist is a person who collects stamps",
+    "answer": "numismatist:coins",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "philosopher:cogitate",
+    "relation": "a philosopher has power to cogitate",
+    "answer": "iconoclast:attack",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "physician:patient",
+    "relation": "a physician takes care of a patient",
+    "answer": "oncologist:cancer",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "pickpocket:wallet",
+    "relation": "a pickpocket steals other people's wallet",
+    "answer": "embezzler:funds",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "pilot:ship",
+    "relation": "a pilot leads a ship",
+    "answer": "conductor:orchestra",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "playwright:actor",
+    "relation": "a playwright  makes material for a actor",
+    "answer": "composer:musician",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "poseur:sincerity",
+    "relation": "a poseur does not have sincerity",
+    "answer": "recluse:gregariousness",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "proctor:supervise",
+    "relation": "a proctor is a person who supervises",
+    "answer": "prodigal:squander",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "professional:rookie",
+    "relation": "a rookie is a beginner for a professional",
+    "answer": "soldier:recruit",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "raconteur:stories",
+    "relation": "a raconteur is a person who tell stories well",
+    "answer": "",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "recluse:withdrawn",
+    "relation": "a recluse is a person who is withdrawn",
+    "answer": "bigot:biased",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "referee:contest",
+    "relation": "a referee judges in a contest",
+    "answer": "referee:game",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "roustabout:circus",
+    "relation": "a roustabout is a worker in circus",
+    "answer": "stevedore:dock",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "ruffian:rowdy",
+    "relation": "a ruffian is a rowdy/rough person",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "runner:marathon",
+    "relation": "a runner runs in a marathon",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "sailor:navigation",
+    "relation": "a sailor is in charge of navigation",
+    "answer": "",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "selflessness:altruist",
+    "relation": "a altruist is a person who has selflessness",
+    "answer": "expertise:connoisseur",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "sluggard:indolence",
+    "relation": "a sluggard is a man of indolence",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "soothsayer:prophecy",
+    "relation": "a soothsayer has capability of prophecy",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "spartan:austere",
+    "relation": "Spartan is a very austere person",
+    "answer": "",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "stickler:approximation",
+    "relation": "a stickler is a person who hates approximation",
+    "answer": "purist:adulteration",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "stinginess:miser",
+    "relation": "a miser is a person who has stinginess",
+    "answer": "sage:wisdom",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "support:patron",
+    "relation": "a patron is a person who shows support",
+    "answer": "loyalty:patriot",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "surgeon:dexterity",
+    "relation": "a surgeon is a man of dexterity",
+    "answer": "acrobat:agility",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "teacher:certification",
+    "relation": "a teacher needs a certification to teach",
+    "answer": "driver:license",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "teacher:pupil",
+    "relation": "a teacher is a person who teaches pupils",
+    "answer": "teacher:student",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "traitor:disloyalty",
+    "relation": "a traitor is a person of disloyalty",
+    "answer": "rebel:defiance",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "trial:attorney",
+    "relation": "a trial is made by attorney",
+    "answer": "surgery:doctor",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "understudy:star",
+    "relation": "an understudy is able to replace a star",
+    "answer": "deputy:sheriff",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "vintner:wine",
+    "relation": "a vintner is a merchant who sells wine",
+    "answer": "",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "vocalist:song",
+    "relation": "a vocalist is a person who sings a song",
+    "answer": "",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "wag:humorous",
+    "relation": "a wag is a person who is humorous",
+    "answer": "dolt:stupid",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "warden:prison",
+    "relation": "a warden is in charge of a prison",
+    "answer": "captain:ship",
+    "cite": "etc"
+  },
+  {
+    "analogy": "wisdom:sage",
+    "relation": "a sage is a person of great wisdom",
+    "answer": "courage:hero",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "listener:eavesdropper",
+    "relation": "an eavesdropper is a defective listener",
+    "answer": "observer:spy",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "gourmand:self-restraint",
+    "relation": "a gourmand lacks self-restraint",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "interloper:consent",
+    "relation": "a interloper intervenes without any consent",
+    "answer": "intruder:invitation",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "coward:brave",
+    "relation": "a coward is a person who is not brave",
+    "answer": "philanthropist:selfish",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "expert:ignorance",
+    "relation": "an expert is a person of no ignorance",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "indulge:ascetic",
+    "relation": "an ascetic is a person who does not indulge",
+    "answer": "restrain:libertine",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "nonconformist:norm",
+    "relation": "a nonconformist disobeys a norm",
+    "answer": "heretic:orthodoxy",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "stoic:comfort",
+    "relation": "stoic is a person who does not seek comfort",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "lawyer:courtroom",
+    "relation": "a lawyer fights in the courtroom",
+    "answer": "gladiator:arena",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "abdomen:stomach",
+    "relation": "a stomach is located in abdomen",
+    "answer": "",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "apple:skin",
+    "relation": "an apple is covered with skin",
+    "answer": "melon:rind",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "aviary:birds",
+    "relation": "birds are confined in a aviary",
+    "answer": "penitentiary:inmates",
+    "cite": "etc"
+  },
+  {
+    "analogy": "bazaar:wares",
+    "relation": "wares are displayed in a bazaar",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "bed:sleep",
+    "relation": "a bed is place to sleep",
+    "answer": "",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "bee:hive/apiary",
+    "relation": "a hive is a home for bees",
+    "answer": "cow:barn",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "bit:drill",
+    "relation": "a bit is on the tip of a drill",
+    "answer": "blade:razer",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "cache:hide",
+    "relation": "a cache is a place used to hide ST",
+    "answer": "stockpile:accumulate",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "camera:film",
+    "relation": "a film is installed in a camera",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "cell:membrane",
+    "relation": "a cell is surrounded by membrane",
+    "answer": "seed:hull",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "cistern:water",
+    "relation": "a cistern is a container of water",
+    "answer": "cup:coffee",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "clinic:nurse",
+    "relation": "nurses work at a clinic",
+    "answer": "pulpit:minister",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "corpuscle:blood",
+    "relation": "a corpuscle exists in blood",
+    "answer": "",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "corral:horses",
+    "relation": "a corral is a place where horses live",
+    "answer": "coop:chickens",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "cravat:neck",
+    "relation": "a cravat is an ornament used in a neck",
+    "answer": "sash:waist",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "credits:movie",
+    "relation": "credits describe the writer's name of a movie",
+    "answer": "byline:article",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "dagger:scabbard",
+    "relation": "a dagger is put into a scabbard",
+    "answer": "pistol:holster",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "desert:oasis",
+    "relation": "a oasis is seen in a desert",
+    "answer": "",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "dictionary:definition",
+    "relation": "a dictionary has a lot of definitions",
+    "answer": "library:books",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "dog:kennel",
+    "relation": "a kennel is a place where a dog lives",
+    "answer": "",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "drawbridge:castle",
+    "relation": "a drawbridge is a passage of a castle",
+    "answer": "gangway:ship",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "druggist:pharmacy",
+    "relation": "a pharmacy is where a druggist work",
+    "answer": "chef:restaurant",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "envelope:letter",
+    "relation": "a letter is stored in an envelope",
+    "answer": "crate:produce",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "epaulet:shoulder",
+    "relation": "an epaulet is used on a shoulder",
+    "answer": "ring:finger",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "exhibition:painting",
+    "relation": "you can enjoy painting in an exhibition",
+    "answer": "concert:symphony",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "eyebrow:eye",
+    "relation": "an eyebrow is located above an eye",
+    "answer": "",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "film:theater",
+    "relation": "a film is seen in a theater",
+    "answer": "",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "fingernail:hand",
+    "relation": "a fingernail is located in the tip of a hand",
+    "answer": "",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "foundation:house",
+    "relation": "a foundation is located below a house",
+    "answer": "pedestal:statue",
+    "cite": "17-2/2"
+  },
+  {
+    "analogy": "fresco:wall",
+    "relation": "a fresco is a sort of art in a wall",
+    "answer": "parquetry:floor",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "greenhouse:plant",
+    "relation": "a plant grows in a greenhouse",
+    "answer": "incubator:infant",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "hand:wrist",
+    "relation": "a wrist is a upper part of a hand",
+    "answer": "foot:ankle",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "hangar:airplane",
+    "relation": "an airplane is stored in a hangar",
+    "answer": "library:book",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "hospital:patient",
+    "relation": "patient receives treatment in hospital",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "husk:corn",
+    "relation": "a husk is ST encircling a corn",
+    "answer": "",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "inn:traveler",
+    "relation": "a traveler sleep in an inn",
+    "answer": "dormitory:student",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "insulin:pancreas",
+    "relation": "insulin is made in a pancreas",
+    "answer": "bile:liver",
+    "cite": "04-1/1"
+  },
+  {
+    "analogy": "intersect:angle",
+    "relation": "an angle is a place where two lines intersect",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "judge:courtroom",
+    "relation": "a judge works at a courtroom",
+    "answer": "theologian:seminary",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "kitchen:cook",
+    "relation": "a cook works in a kitchen",
+    "answer": "",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "kitchen:knife",
+    "relation": "a knife is usually stored in kitchen",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "mail:mailbox",
+    "relation": "a mailbox is a place to store mails",
+    "answer": "laundry:hamper",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "meadow:cow",
+    "relation": "a meadow is a place for a cow",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "mill:grain",
+    "relation": "grain is processed in a mill",
+    "answer": "forge:metal",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "muffler:neck",
+    "relation": "a muffler keeps the temperature of a neck",
+    "answer": "mitten:hand",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "necklace:neck",
+    "relation": "a necklace is an ornament used around a neck",
+    "answer": "earring:ear",
+    "cite": "etc"
+  },
+  {
+    "analogy": "ore:mine",
+    "relation": "a ore is obtained in a mine",
+    "answer": "",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "outskirts:town",
+    "relation": "outskirts is located outside a town",
+    "answer": "margin:page",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "painting:museum",
+    "relation": "a museum has a lot of paintings",
+    "answer": "animal:menagerie",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "palate:mouth",
+    "relation": "a palate is a upper part of a mouth",
+    "answer": "ceiling:room",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "pantry:foods",
+    "relation": "a pantry is a place where foods are stored",
+    "answer": "",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "peroration:speech",
+    "relation": "a peroration is a last part of a speech",
+    "answer": "coda:sonata",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "plant:soil",
+    "relation": "a plant grows in soil",
+    "answer": "organism:medium",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "prologue:novel",
+    "relation": "a prologue is front part of a novel",
+    "answer": "preamble:statute",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "referee:field",
+    "relation": "a referee decides in the field",
+    "answer": "judge:courtroom",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "sanatorium:diseases",
+    "relation": "a sanatorium is a hospital for chronic diseases",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "screen:movie",
+    "relation": "a movie is performed in a screen",
+    "answer": "stage:play",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "shelf:book",
+    "relation": "a shelf is where a book is stored",
+    "answer": "skull:brain",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "snifter:brandy",
+    "relation": "a snifter is a glass in which brandy is filled",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "socket:bulb",
+    "relation": "a bulb is put in a socket",
+    "answer": "quiver:arrow",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "stage:performer",
+    "relation": "a stage is the place for a performer dry",
+    "answer": "dock:ship",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "star:sky",
+    "relation": "a star is located in the sky",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "submerge:water",
+    "relation": "to submerge is to go under water",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "superimpose:above",
+    "relation": "to superimpose is to put ST above some place",
+    "answer": "insert:between",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "surf:sea",
+    "relation": "surf is seen in a sea",
+    "answer": "",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "surgery:operate",
+    "relation": "a surgery is a place to operate in a hospital",
+    "answer": "",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "tank:fuel",
+    "relation": "fuel is stored in a tank",
+    "answer": "",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "tuxedo:wardrobe",
+    "relation": "a wardrobe is a place to keep a tuxedo",
+    "answer": "yacht:harbor",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "volcano:lava",
+    "relation": "lava is come out of a volcano",
+    "answer": "geyser:water",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "wardrobe:clothes",
+    "relation": "a wardrobe is a place where clothes are stored",
+    "answer": "bookcase:books",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "water:goblet",
+    "relation": "a goblet is able to contain water",
+    "answer": "",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "water:swim",
+    "relation": "you can swim in water",
+    "answer": "snow:ski",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "web:spider",
+    "relation": "a web is a house of a spider",
+    "answer": "nest:bird",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "well:water",
+    "relation": "water is produced in a well",
+    "answer": "orchard:fruit",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "prologue:play",
+    "relation": "a prologue is the first part of a play",
+    "answer": "salutation:letter",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "citadel:attack",
+    "relation": "a citadel is a place to prevent attacking",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "abstinence:drunkenness",
+    "relation": "abstinence prevents drunkenness",
+    "answer": "celibacy:promiscuity",
+    "cite": "CYB"
+  },
+  {
+    "analogy": "antibiotic:infection",
+    "relation": "antibiotic prevents infection",
+    "answer": "coagulant:bleeding",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "antidote:poison",
+    "relation": "antidote prevents poison",
+    "answer": "tonic:lethargy",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "antidote:poisoning",
+    "relation": "a antidote protects poisoning",
+    "answer": "antibiotic:infection",
+    "cite": "etc"
+  },
+  {
+    "analogy": "antihistamine:congestion",
+    "relation": "antihistamine prevents congestion",
+    "answer": "water:thirst",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "anxious:reassurance",
+    "relation": "reassurance is to prevent being anxious",
+    "answer": "perplexed:clarification",
+    "cite": "23-4"
+  },
+  {
+    "analogy": "artery:plaque",
+    "relation": "a plaque prevents artery",
+    "answer": "channel:silt",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "assuage:sorrow",
+    "relation": "to assuage is to lessen sorrow",
+    "answer": "dampen:ardor",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "asthma:respiration",
+    "relation": "asthma prevents respiration",
+    "answer": "antiseptic:infection",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "baste:dryness",
+    "relation": "to baste is to prevent dryness",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "belie:truth",
+    "relation": "to belie is to hide truth",
+    "answer": "mask:face",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "buffer:shock",
+    "relation": "a buffer prevents shock",
+    "answer": "preservative:decay",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "censorship:information",
+    "relation": "censorship prevents information",
+    "answer": "sanitation:disease",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "checkpoint:highway",
+    "relation": "a checkpoint interrupts the flow of a highway",
+    "answer": "valve:pipe",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "damp:vibration",
+    "relation": "to damp is to prevent vibration",
+    "answer": "stanch:flow",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "detoxification:poison",
+    "relation": "detoxification is to prevent poison",
+    "answer": "neutralization:acid",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "detoxify:poison",
+    "relation": "to detoxify is to get rid of poison",
+    "answer": "dehydrate:water",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "disguise:identification",
+    "relation": "disguise prevent identification",
+    "answer": "camouflage:detection",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "disguise:recognition",
+    "relation": "disguise prevents recognition",
+    "answer": "padding:damage",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "drifting:anchor",
+    "relation": "a anchor prevents drifting",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "euphemism:offense",
+    "relation": "euphemism avoids an offense",
+    "answer": "prevarication:truth",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "foolproof:fail",
+    "relation": "foolproof is to prevent failing",
+    "answer": "airtight:leak",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "imprison:freedom",
+    "relation": "to imprison is to get rid of freedom",
+    "answer": "",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "insomnia:sleep",
+    "relation": "insomnia prevents SB from sleeping",
+    "answer": "dyslexia:read",
+    "cite": "etc"
+  },
+  {
+    "analogy": "intermission:performance",
+    "relation": "an intermission prevents a performance",
+    "answer": "dam:flow",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "lubricate:abrasion",
+    "relation": "to lubricate prevents abrasion",
+    "answer": "seal:leakage",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "mitigation:severe",
+    "relation": "mitigation is to make ST less severe",
+    "answer": "",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "nebulous:validation",
+    "relation": "nebulous is to prevent checking its validation",
+    "answer": "",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "obscurity:intelligibility",
+    "relation": "obscurity prevents intelligibility",
+    "answer": "ambiguity:clarity",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "perturb:serenity",
+    "relation": "to perturb is to prevent serenity",
+    "answer": "reassure:doubt",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "pesticide:insects",
+    "relation": "a pesticide prevents insects",
+    "answer": "rampart:invasion",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "placate:pique",
+    "relation": "to placate is to assuage pique",
+    "answer": "",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "prohibitive:purchase",
+    "relation": "prohibitive prevents from purchasing",
+    "answer": "peremptory:dispute",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "purification:dross",
+    "relation": "purification is to get rid of dross",
+    "answer": "desalinization:salt",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "purify:imperfection",
+    "relation": "to purify is to lessen imperfection",
+    "answer": "verify:doubtfulness",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "rarefy:density",
+    "relation": "to rarefy is to prevent density",
+    "answer": "quell:activity",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "remission:disease",
+    "relation": "remission prevents disease",
+    "answer": "stay:execution",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "sedative:pain",
+    "relation": "a sedative relieves pain",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "slake:thirst",
+    "relation": "to slake is to get rid of thirst",
+    "answer": "satiate:hunger",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "sterilization:microorganism",
+    "relation": "a sterilization is to kill microorganisms",
+    "answer": "deforestation:trees",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "stream:dam",
+    "relation": "a dam prevents the stream of a river",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "tamper:adjust",
+    "relation": "to tamper is to prevent adjust",
+    "answer": "misrepresent:communicati",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "vaccine:virus",
+    "relation": "vaccine is used to prevent virus",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "whet:blunt",
+    "relation": "to whet is to prevent being blunt",
+    "answer": "",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "ballast:instability",
+    "relation": "to ballast is a tool to prevent instability",
+    "answer": "purchase:slippage",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "tourniquet:blood",
+    "relation": "a tourniquet is a tool to prevent blooding",
+    "answer": "dam:water",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "alacrity:prompt",
+    "relation": "alacrity is to be prompt",
+    "answer": "acumen:shrewd",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "aphoristic:terse",
+    "relation": "aphoristic word is terse",
+    "answer": "hyperbolic:exaggerated",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "assault:defeat",
+    "relation": "assault is defeat",
+    "answer": "riddle:puzzle",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "betray:treachery",
+    "relation": "treachery is to betray",
+    "answer": "abandon:desertion",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "break:shatter",
+    "relation": "to break is to shatter",
+    "answer": "",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "close:occlude",
+    "relation": "to close is to occlude",
+    "answer": "intervene:interfere",
+    "cite": "22-4"
+  },
+  {
+    "analogy": "compel:force",
+    "relation": "to compel is to force",
+    "answer": "replicate:copy",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "compendium:summary",
+    "relation": "a compendium is a summary",
+    "answer": "anthology:collection",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "conciliation:appeasement",
+    "relation": "conciliation is appeasement",
+    "answer": "",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "conciliatory:friendliness",
+    "relation": "friendliness is ST conciliatory",
+    "answer": "rueful:sorrow",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "contiguous:abut",
+    "relation": "contiguous is to abut",
+    "answer": "simultaneous:coincide",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "countenance:toleration",
+    "relation": "to countenance is to have toleration",
+    "answer": "demur:objection",
+    "cite": "25-2"
+  },
+  {
+    "analogy": "crumble:destruction",
+    "relation": "destruction is to crumble ST",
+    "answer": "",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "disinterested:impartial",
+    "relation": "disinterested is to be impartial",
+    "answer": "fallacious:erroneous",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "dissemble:pretense",
+    "relation": "pretense is to dissemble",
+    "answer": "",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "divert:shunt",
+    "relation": "to divert is to shunt",
+    "answer": "file:collate",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "dormant:inactivity",
+    "relation": "dormant is to be inactive",
+    "answer": "malleable:plasticity",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "equivocation:ambiguous",
+    "relation": "equivocation is to be ambiguous",
+    "answer": "platitude:banal",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "erode:diminish",
+    "relation": "to erode is to diminish",
+    "answer": "accrete:enlarge",
+    "cite": "CYB"
+  },
+  {
+    "analogy": "eulogy:praise",
+    "relation": "eulogy is to praise",
+    "answer": "elegy:lament",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "flourish:thrive",
+    "relation": "to flourish is to thrive",
+    "answer": "rot:decay",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "foible:fault",
+    "relation": "a foible is a fault",
+    "answer": "quibble:objection",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "fortuitous:accidental",
+    "relation": "fortuitous is to be accidental",
+    "answer": "furtive:surreptitious",
+    "cite": "01-1"
+  },
+  {
+    "analogy": "furtive:stealth",
+    "relation": "stealth is to be furtive",
+    "answer": "whimsical:caprice",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "harangue:bombast",
+    "relation": "to harangue is to be bombast",
+    "answer": "",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "hemorrhage:bleeding",
+    "relation": "hemorrhage is bleeding",
+    "answer": "vertigo:dizziness",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "hoard:save",
+    "relation": "to hoard is to save",
+    "answer": "revere:admire",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "hostile:bellicose",
+    "relation": "hostile is to be bellicose",
+    "answer": "stubborn:obdurate",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "immaculate:cleanliness",
+    "relation": "cleanliness is to be immaculate",
+    "answer": "",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "instruct:teach",
+    "relation": "to instruct is to teach",
+    "answer": "argue:debate",
+    "cite": "23-4/2"
+  },
+  {
+    "analogy": "inundate:flood",
+    "relation": "to inundate is to flood",
+    "answer": "placate:assuage",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "jovial:conviviality",
+    "relation": "conviviality is to be jovial",
+    "answer": "",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "labyrinth:tortuous",
+    "relation": "a labyrinth is tortuous",
+    "answer": "ornament:decorative",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "lavish:extravagance",
+    "relation": "extravagance is to lavish",
+    "answer": "",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "libel:defamatory",
+    "relation": "libel is ST defamatory",
+    "answer": "praise:laudatory",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "liberate:free",
+    "relation": "to liberate is to set free",
+    "answer": "retreat:withdraw",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "magisterial:authoritative",
+    "relation": "magisterial is to be authoritative",
+    "answer": "",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "mar:deface",
+    "relation": "to mar is to deface",
+    "answer": "warp:deform",
+    "cite": "13-4"
+  },
+  {
+    "analogy": "martial:military",
+    "relation": "martial is to be military",
+    "answer": "runic:mysterious",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "panegyric:eulogize",
+    "relation": "panegyric is to eulogize",
+    "answer": "lampoon:satirize",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "patio:terrace",
+    "relation": "a patio is a terrace",
+    "answer": "",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "penury:poverty",
+    "relation": "penury is poverty",
+    "answer": "homesickness:nostalgia",
+    "cite": "06-2/2"
+  },
+  {
+    "analogy": "pertinent:relevance",
+    "relation": "relevance is to be pertinent",
+    "answer": "redundant:superfluity",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "platitude:trite",
+    "relation": "platitude is to be trite",
+    "answer": "innovation:novel",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "polished:shining",
+    "relation": "polished is to be shining",
+    "answer": "",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "potpourri:medley",
+    "relation": "potpourri is medley",
+    "answer": "dirge:requiem",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "querulous:complain",
+    "relation": "querulous is to complain much",
+    "answer": "prodigal:spend",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "rash:promptness",
+    "relation": "promptness is to be rash",
+    "answer": "",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "redundant:repetitious",
+    "relation": "redundant is to be repetitious",
+    "answer": "verbose:wordy",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "refine:purification",
+    "relation": "purification is to refine",
+    "answer": "attenuate:rarefaction",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "refractory:intransigence",
+    "relation": "intransigence is to be refractory",
+    "answer": "",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "satiated:satisfied",
+    "relation": "satiated is to be satisfied",
+    "answer": "suspicious:doubted",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "secrete:conceal",
+    "relation": "to secrete is to conceal",
+    "answer": "flatter:fawn",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "slanderous:slur",
+    "relation": "slur is a slanderous word",
+    "answer": "",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "smother:choked",
+    "relation": "to smother is to make SB choked",
+    "answer": "pacify:tranquil",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "study:learn",
+    "relation": "to study is to learn",
+    "answer": "search:find",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "supplant:replace",
+    "relation": "to supplant is to replace",
+    "answer": "snatch:take",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "surreptitious:secrecy",
+    "relation": "surreptitious is to keep secrecy",
+    "answer": "alacrity:cheerfulness",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "tart:pungency",
+    "relation": "pungency is ST tart",
+    "answer": "",
+    "cite": "25-5"
+  },
+  {
+    "analogy": "tirade:criticize",
+    "relation": "tirade is an oration to criticize",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "tranquil:placid",
+    "relation": "tranquil is to be placid",
+    "answer": "",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "tranquility:peace",
+    "relation": "peace is ST of tranquility",
+    "answer": "disorder:chaos",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "trudge:plod",
+    "relation": "to trudge is to plod",
+    "answer": "leer:ogle",
+    "cite": "11-6/2"
+  },
+  {
+    "analogy": "veneer:varnish",
+    "relation": "to veneer is to varnish",
+    "answer": "wheedle:inveigle",
+    "cite": "27-5"
+  },
+  {
+    "analogy": "verbose:prolix",
+    "relation": "verbose is to be prolix",
+    "answer": "incisive:trenchant",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "wheedle:coax",
+    "relation": "to wheedle is to coax",
+    "answer": "prove:examine",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "willfulness:headstrong",
+    "relation": "willfulness is to be headstrong",
+    "answer": "subservience:fawning",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "forgery:counterfeit",
+    "relation": "forgery is illegal production of counterfeit",
+    "answer": "embezzlement:fraud",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "adult:child",
+    "relation": "if a child grow up, he can be a adult",
+    "answer": "cat:kitten",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "annex:building",
+    "relation": "an annex is added to building afterward",
+    "answer": "epilogue:novel",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "appetizer:meal",
+    "relation": "an appetizer comes before meal",
+    "answer": "",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "bud:leaf",
+    "relation": "a bud is a beginning form of a leaf",
+    "answer": "",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "caterpillar:moth",
+    "relation": "a caterpillar is the previous form of a moth",
+    "answer": "",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "condemned:executed",
+    "relation": "condemned is followed by being executed",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "daguerreotype:photograph",
+    "relation": "a daguerreotype is an old form of a photograph",
+    "answer": "musket:firearm",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "default:foreclosure",
+    "relation": "default is followed by foreclosure",
+    "answer": "planting:harvest",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "egg:chicken",
+    "relation": "a chicken is born from an egg",
+    "answer": "roe:salmon",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "engagement:marriage",
+    "relation": "an engagement comes before a marriage",
+    "answer": "stumble:fall",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "illness:symptom",
+    "relation": "symptom is a portent of illness",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "recovery:operation",
+    "relation": "an operation is followed by recover",
+    "answer": "convalescence:treatment",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "sentence:prosecute",
+    "relation": "a sentence is made after prosecuting",
+    "answer": "",
+    "cite": "19-4"
+  },
+  {
+    "analogy": "tadpole:frog",
+    "relation": "a tadpole is a previous form of a frog",
+    "answer": "caterpillar:butterfly",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "verdict:trial",
+    "relation": "a verdict is a last part of a trial",
+    "answer": "finish:race",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "withering:ripening",
+    "relation": "withering comes after ripening",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "wood:ash",
+    "relation": "ash is made when wood is burnt",
+    "answer": "",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "wood:sawdust",
+    "relation": "sawdust id made when a wood is cut",
+    "answer": "metal:filings",
+    "cite": "etc"
+  },
+  {
+    "analogy": "gambit:move",
+    "relation": "gambit is a first move in a chess",
+    "answer": "",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "overture:opera",
+    "relation": "an overture is the beginning of a opera",
+    "answer": "preamble:statute",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "blush:embarrassment",
+    "relation": "to blush is a sign of embarrassment",
+    "answer": "smile:pleasure",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "boast:vanity",
+    "relation": "to boast is a sign of vanity",
+    "answer": "gloat:satisfaction",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "bracket:enclosure",
+    "relation": "a bracket is a sign of enclosure",
+    "answer": "colon:exemplification",
+    "cite": "etc"
+  },
+  {
+    "analogy": "caress:affection",
+    "relation": "to caress is a sign of affection",
+    "answer": "endearment:affection",
+    "cite": "21-6"
+  },
+  {
+    "analogy": "caret:insertion",
+    "relation": "caret is a symbol representing insertion",
+    "answer": "comma:pause",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "cornucopia:abundance",
+    "relation": "a cornucopia is a sign of abundance",
+    "answer": "mace:authority",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "cornucopia:abundance(2)",
+    "relation": "cornucopia is a symbol meaning abundance",
+    "answer": "phoenix:rebirth",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "cringe:fear",
+    "relation": "to cringe is a sign of fear",
+    "answer": "yawn:boredom",
+    "cite": "etc"
+  },
+  {
+    "analogy": "demur:qualms",
+    "relation": "to demur is a sign of qualms",
+    "answer": "waver:irresoluteness",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "discomfited:blush",
+    "relation": "to blush is a sign of being discomfited",
+    "answer": "contemptuous:sneer",
+    "cite": "24-2"
+  },
+  {
+    "analogy": "embrace:affection",
+    "relation": "embrace is a sign of affection",
+    "answer": "frown:displeasure",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "enclose:parentheses",
+    "relation": "a parentheses is a sign to enclose",
+    "answer": "separate:comma",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "fear:cower",
+    "relation": "fear is a sign of cower",
+    "answer": "anger:rant",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "fidget:nervousness",
+    "relation": "to fidget is a sign of nervousness",
+    "answer": "cringe:dread",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "frown:adversity",
+    "relation": "to frown is a sign of adversity",
+    "answer": "scream:fear",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "glossary:text",
+    "relation": "glossary is a collection of words in a text",
+    "answer": "legend:map",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "grief:weep",
+    "relation": "to weep is a sign of grief",
+    "answer": "pleasure:gloat",
+    "cite": "etc"
+  },
+  {
+    "analogy": "grimace:pain",
+    "relation": "grimace is a sign of pain",
+    "answer": "shriek:terror",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "jeer:ridicule",
+    "relation": "jeer is a sign of ridicule",
+    "answer": "glower:angry",
+    "cite": "etc"
+  },
+  {
+    "analogy": "laugh:joy",
+    "relation": "to laugh is a sign of joy",
+    "answer": "whine:grief",
+    "cite": "etc"
+  },
+  {
+    "analogy": "moan:pain",
+    "relation": "a moan is a sign of pain",
+    "answer": "hiss:disapproval",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "parenthesis:explanation",
+    "relation": "parenthesis is a symbol meaning explanation",
+    "answer": "ellipsis:ommission",
+    "cite": "05-2"
+  },
+  {
+    "analogy": "preen:self-satisfaction",
+    "relation": "to preen is a sign of self-satisfaction",
+    "answer": "fume:anger",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "smile:happiness",
+    "relation": "to smile is a sign of happiness",
+    "answer": "frown:anger",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "submission:obeisance",
+    "relation": "obeisance is a sigh of submission",
+    "answer": "affection:embrace",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "symptom:disease",
+    "relation": "a symptom is a sign of a disease",
+    "answer": "",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "trembling:fear",
+    "relation": "trembling is a sign of fear",
+    "answer": "sigh:relief",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "underscore:emphasis",
+    "relation": "an underscore is a sign of emphasis",
+    "answer": "",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "wave:recognition",
+    "relation": "a wave is a sign of recognition",
+    "answer": "frown:disapproval",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "abacus:calculate",
+    "relation": "an abacus is a tool to calculate",
+    "answer": "sextant:navigate",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "antenna:signal",
+    "relation": "an antenna is a tool to catch signals",
+    "answer": "net:fish",
+    "cite": "11-6"
+  },
+  {
+    "analogy": "aqueduct:water",
+    "relation": "an aqueduct is a tool to carry water",
+    "answer": "artery:blood",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "awl:pierce",
+    "relation": "an awl is a tool used to pierces",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "bait:fish",
+    "relation": "a bait is a tool to catch fish",
+    "answer": "",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "baton:runner",
+    "relation": "a baton is a tool of a runner",
+    "answer": "forger:furnace",
+    "cite": "09-4"
+  },
+  {
+    "analogy": "bicyclist:pedal",
+    "relation": "a pedal is a tool used by a bicyclist",
+    "answer": "rower:oar",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "bird:snare",
+    "relation": "a snare is a tool to catch a bird",
+    "answer": "fish:seine",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "bird:wings",
+    "relation": "a bird moves with its wings",
+    "answer": "spider:legs",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "blandishment:coax",
+    "relation": "blandishment is a tool to coax",
+    "answer": "medal:honor",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "blood:aorta",
+    "relation": "blood flows through aorta",
+    "answer": "",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "bone:body",
+    "relation": "a bone is a structure to support a body",
+    "answer": "girder:skyscraper",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "brain:thinking",
+    "relation": "brain is organ which takes charge of thinking",
+    "answer": "lung:breathing",
+    "cite": "etc"
+  },
+  {
+    "analogy": "brush:painter",
+    "relation": "a painter works with a brush",
+    "answer": "trowel:bricklayer",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "brush:painting",
+    "relation": "a brush is a tool for a painting",
+    "answer": "chisel:sculpture",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "buoy:direction",
+    "relation": "a buoy is a tool to inform a direction",
+    "answer": "",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "census:population",
+    "relation": "census is a measurement of population",
+    "answer": "inventory:merchandise",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "centrifuge:separate",
+    "relation": "a centrifuge is used to separate ST",
+    "answer": "colander:drain",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "colander:chef",
+    "relation": "a colander is a tool of chef",
+    "answer": "weapon:soldier",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "crochet:hook",
+    "relation": "a hook is a tool to crochet",
+    "answer": "weave:loom",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "curtain:scenery",
+    "relation": "a curtain is a tool to hide scenery",
+    "answer": "",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "curtain:stage",
+    "relation": "curtain is a tool to hide stage veil: face",
+    "answer": "",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "decibel:loudness",
+    "relation": "decibel is a unit to measure loudness",
+    "answer": "light-year:distance",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "decibel:sound",
+    "relation": "decibel is a unit to measure intensity of sound",
+    "answer": "lumen:light",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "decibel:sound(2)",
+    "relation": "decibel is a unit to measure the strength of sound",
+    "answer": "volt:electricity",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "die:shaping",
+    "relation": "a die is a tool used in shaping",
+    "answer": "drill:boring",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "distance:odometer",
+    "relation": "a odometer is a device to measure distance",
+    "answer": "heat:calorimeter",
+    "cite": "etc"
+  },
+  {
+    "analogy": "door:room",
+    "relation": "you can go into a room through a door",
+    "answer": "hatch:hold",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "emollient:soothe",
+    "relation": "an emollient is a tool to soothe",
+    "answer": "dynamo:generate",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "fingerprint:identity",
+    "relation": "a fingerprint is used to affirm an identity",
+    "answer": "",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "frame:painting",
+    "relation": "a frame is a tool to hold a painting",
+    "answer": "",
+    "cite": "06-2"
+  },
+  {
+    "analogy": "frieze:ornament",
+    "relation": "a frieze is used for ornament",
+    "answer": "pillar:support",
+    "cite": "11-3"
+  },
+  {
+    "analogy": "gallon:water",
+    "relation": "gallon is a unit to measure quantity of water",
+    "answer": "",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "girder:building",
+    "relation": "a girder is used to support a building",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "grindstone:sharpness",
+    "relation": "a grindstone is a tool to improve sharpness",
+    "answer": "",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "hammer:carpenter",
+    "relation": "a hammer is a tool for a carpenter",
+    "answer": "knife:butcher",
+    "cite": "14-1"
+  },
+  {
+    "analogy": "heat:calories",
+    "relation": "calories are units to measure the degree of heat",
+    "answer": "liquid:gallons",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "hole:drill",
+    "relation": "a drill is a tool to make a hole",
+    "answer": "incision:scalpel",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "hone:sharpness",
+    "relation": "a hone is used to improve sharpness",
+    "answer": "",
+    "cite": "etc"
+  },
+  {
+    "analogy": "hoof:horse",
+    "relation": "a hoof is a tool to cover toes of a horse",
+    "answer": "",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "lathe:metal",
+    "relation": "a lathe is a tool to process metal",
+    "answer": "",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "locomotive:flatcar",
+    "relation": "a locomotive draws/tows a flatcar",
+    "answer": "tugboat:barge",
+    "cite": "15-2"
+  },
+  {
+    "analogy": "loom:cloth",
+    "relation": "a loom is a tool to make cloth",
+    "answer": "match:fire",
+    "cite": "10-1/1"
+  },
+  {
+    "analogy": "meter:distance",
+    "relation": "meter is a unit to measure distance",
+    "answer": "clock:time",
+    "cite": "12-3"
+  },
+  {
+    "analogy": "microphone:hearing",
+    "relation": "a microphone is a tool for hearing",
+    "answer": "",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "microscope:small",
+    "relation": "a microscope is a tool to see ST small",
+    "answer": "telescope:distant",
+    "cite": "08-1"
+  },
+  {
+    "analogy": "nail:hammer",
+    "relation": "a hammer is a tool to put a nail in a wall",
+    "answer": "",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "needle:knit",
+    "relation": "a needle is a tool to knit",
+    "answer": "loom:weave",
+    "cite": "16-4"
+  },
+  {
+    "analogy": "odometer:distance",
+    "relation": "an odometer is a tool to measure distance",
+    "answer": "",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "pedal:propelling",
+    "relation": "a pedal is a tool to propel",
+    "answer": "",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "pen:writer",
+    "relation": "a pen is the tool of a writer",
+    "answer": "brush:painter",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "photograph:light",
+    "relation": "a photograph contain information of light",
+    "answer": "recording:sound",
+    "cite": "02-4"
+  },
+  {
+    "analogy": "pound:heaviness",
+    "relation": "pound is a unit to measure heaviness",
+    "answer": "",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "proof:alcohol",
+    "relation": "proof is a tool to measure the degree of alcohol",
+    "answer": "karat:gold",
+    "cite": "etc"
+  },
+  {
+    "analogy": "racquet:tennis",
+    "relation": "a racquet is a tool for tennis",
+    "answer": "bat:baseball",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "ream:paper",
+    "relation": "a ream is a unit to measure quantity of paper",
+    "answer": "yard:rope",
+    "cite": "etc"
+  },
+  {
+    "analogy": "ruler:centimeter",
+    "relation": "a ruler is a tool to measure centimeter",
+    "answer": "watch:minute",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "saw:carpenter",
+    "relation": "a carpenter cut with a saw",
+    "answer": "scissors:tailor",
+    "cite": "23-1"
+  },
+  {
+    "analogy": "scalpel:surgeon",
+    "relation": "a scalpel is a tool of a surgeon",
+    "answer": "telescope:astronomer",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "scalpel:surgeon(2)",
+    "relation": "a scalpel is the tool of a surgeon",
+    "answer": "wrench:mechanic",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "scorpion:sting",
+    "relation": "a scorpion has a sting to protect its enemy",
+    "answer": "lobster:claw",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "sculptor:chisel",
+    "relation": "a chisel is a tool of sculptor",
+    "answer": "lumberjack:ax",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "scythe:reaping",
+    "relation": "a scythe is a tool for reaping",
+    "answer": "shears:cutting",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "signal:whistle",
+    "relation": "whistle is a tool to give a signal",
+    "answer": "",
+    "cite": "20-6"
+  },
+  {
+    "analogy": "sprinkler:water",
+    "relation": "a sprinkler is a tool to sprinkle water",
+    "answer": "",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "stapler:paper",
+    "relation": "a stapler is used to file paper",
+    "answer": "",
+    "cite": "04-4"
+  },
+  {
+    "analogy": "stockade:enclosure",
+    "relation": "stockade is a tool for enclosure",
+    "answer": "pillar:support",
+    "cite": "10-4"
+  },
+  {
+    "analogy": "strut:wing",
+    "relation": "a strut is a structure to support a wing",
+    "answer": "buttress:wall",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "strut:wing(2)",
+    "relation": "a strut is a structure to support a wing",
+    "answer": "guy:pylon",
+    "cite": "26-2"
+  },
+  {
+    "analogy": "sundial:time",
+    "relation": "a sundial is a tool to measure time",
+    "answer": "balance:weight",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "thermometer:temperature",
+    "relation": "a thermometer is a tool to measure temperature",
+    "answer": "compass:direction",
+    "cite": "21-3"
+  },
+  {
+    "analogy": "tune:piano",
+    "relation": "tune improves the quality of a piano",
+    "answer": "grindstone:knife",
+    "cite": "etc"
+  },
+  {
+    "analogy": "university:education",
+    "relation": "a university is an institute of education",
+    "answer": "",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "vehicle:convoy",
+    "relation": "a vehicle is a tool to convoy",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "vessel:blood",
+    "relation": "a vessel is an organ to carry blood",
+    "answer": "pipeline:gas",
+    "cite": "22-1"
+  },
+  {
+    "analogy": "doctor:stethoscope",
+    "relation": "a stethoscope is used by a doctor",
+    "answer": "lecturer:podium",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "judge:govel",
+    "relation": "a judge judges with a gavel",
+    "answer": "referee:whistle",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "levee:river",
+    "relation": "a levee prevents river from overflowing",
+    "answer": "cordon:crowd",
+    "cite": "20-3"
+  },
+  {
+    "analogy": "sketch:drawing",
+    "relation": "a sketch is a design or a plan for drawing",
+    "answer": "blueprint:building",
+    "cite": "etc"
+  },
+  {
+    "analogy": "alcove:recess",
+    "relation": "an alcove is a type of recess",
+    "answer": "dome:roof",
+    "cite": "24-1"
+  },
+  {
+    "analogy": "anecdote:story",
+    "relation": "an anecdote is a type of stories",
+    "answer": "skit:play",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "anger:emotion",
+    "relation": "anger is a type of emotion",
+    "answer": "orange:fruit",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "animal:cat",
+    "relation": "a cat is a kind of animals",
+    "answer": "furniture:chair",
+    "cite": "03-3"
+  },
+  {
+    "analogy": "apple:fruit",
+    "relation": "an apple is a type of fruit",
+    "answer": "wool:fabric",
+    "cite": "07-1"
+  },
+  {
+    "analogy": "arachnid:tarantula",
+    "relation": "tarantula is a type of arachnid",
+    "answer": "joy:emotion",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "armada:vehicles",
+    "relation": "a armada is a type of vehicles",
+    "answer": "fusillade:projectiles",
+    "cite": "06-1"
+  },
+  {
+    "analogy": "ballad:song",
+    "relation": "a ballad is a type of songs",
+    "answer": "ode:poem",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "carrion:vulture",
+    "relation": "a vulture is a sort of eagles which eat carrion",
+    "answer": "",
+    "cite": "14-6"
+  },
+  {
+    "analogy": "dirge:music",
+    "relation": "a dirge is a type of sad music",
+    "answer": "elegy:poetry",
+    "cite": "26-5"
+  },
+  {
+    "analogy": "eagle:bird",
+    "relation": "a eagle is a type of birds",
+    "answer": "beagle:dog",
+    "cite": "etc"
+  },
+  {
+    "analogy": "elbow:joint",
+    "relation": "a elbow is a type of joint",
+    "answer": "heart:organ",
+    "cite": "03-5"
+  },
+  {
+    "analogy": "enzyme:catalyst",
+    "relation": "an enzyme is a type of catalyst",
+    "answer": "bacterium:microbe",
+    "cite": "09-2"
+  },
+  {
+    "analogy": "finger:thumb",
+    "relation": "a thumb is a type of fingers",
+    "answer": "bomb:grenade",
+    "cite": "05-4"
+  },
+  {
+    "analogy": "flint:stone",
+    "relation": "a flint is a type of stones",
+    "answer": "protagonist:character",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "four-poster:bed",
+    "relation": "a four-poster is a type of beds",
+    "answer": "convertible:automobil",
+    "cite": "17-1"
+  },
+  {
+    "analogy": "fun:joke",
+    "relation": "fun is a type of joke",
+    "answer": "courage:virture",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "gem:turquoise",
+    "relation": "a turquoise is a type of gem",
+    "answer": "flower:violet",
+    "cite": "16-1"
+  },
+  {
+    "analogy": "insect:butterfly",
+    "relation": "a butterfly is a type of insects",
+    "answer": "philosophy:metaphysics",
+    "cite": "17-2"
+  },
+  {
+    "analogy": "iron:metal",
+    "relation": "iron is a type of metal",
+    "answer": "emerald:gem",
+    "cite": "Prince"
+  },
+  {
+    "analogy": "limerick:poem",
+    "relation": "a limerick is a type of poem",
+    "answer": "lampoon:satire",
+    "cite": "12-6"
+  },
+  {
+    "analogy": "liturgy:rite",
+    "relation": "a liturgy is a type of a rite",
+    "answer": "",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "lullaby:song",
+    "relation": "a lullaby is a type of songs",
+    "answer": "diatribe:discourse",
+    "cite": "18-1"
+  },
+  {
+    "analogy": "mansion:residence",
+    "relation": "a mansion is a type of residences",
+    "answer": "limousine:automoble",
+    "cite": "18-4"
+  },
+  {
+    "analogy": "mimicry:camouflage",
+    "relation": "mimicry is a type of camouflage",
+    "answer": "mutation:variation",
+    "cite": "13-1"
+  },
+  {
+    "analogy": "misdemeanor:crime",
+    "relation": "a misdemeanor is a less severe type of crime",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "oak:tree",
+    "relation": "a oak is a type of trees",
+    "answer": "magazine:periodical",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "organ:kidney",
+    "relation": "a kidney is a type of organs",
+    "answer": "bone:rib",
+    "cite": "02-1"
+  },
+  {
+    "analogy": "ostrich:bird",
+    "relation": "an ostrich is a type of a birds",
+    "answer": "tiger:cat",
+    "cite": "08-5"
+  },
+  {
+    "analogy": "pastiche:painting",
+    "relation": "a pastiche is a painting imitating other works",
+    "answer": "",
+    "cite": "10-1"
+  },
+  {
+    "analogy": "prose:writing",
+    "relation": "a prose is a type of writings",
+    "answer": "calligraphy:writing",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "royalty:payment",
+    "relation": "royalty is a type of payment",
+    "answer": "subpoena:writ",
+    "cite": "15-4"
+  },
+  {
+    "analogy": "soliloquy:play",
+    "relation": "a soliloquy is a solo type of play",
+    "answer": "aria:opera",
+    "cite": "19-1"
+  },
+  {
+    "analogy": "sonnet:poem",
+    "relation": "a sonnet is a type of poem",
+    "answer": "mural:painting",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "suede:leather",
+    "relation": "suede is a type of leather",
+    "answer": "lyric:poem",
+    "cite": "11-6/1"
+  },
+  {
+    "analogy": "suitcase:luggage",
+    "relation": "a suitcase is a type of luggage",
+    "answer": "hat:millinery",
+    "cite": "01-4"
+  },
+  {
+    "analogy": "swine:sow",
+    "relation": "a sow, a female pig,  is a type of swine",
+    "answer": "",
+    "cite": "07-2"
+  },
+  {
+    "analogy": "tango:dance",
+    "relation": "tango is a type of dance",
+    "answer": "elegy:poem",
+    "cite": "27-1"
+  },
+  {
+    "analogy": "termite:insect",
+    "relation": "a termite is a type of insects",
+    "answer": "grotto:cave",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "voting:roll",
+    "relation": "call roll call is a type of voting",
+    "answer": "termination:cloture",
+    "cite": "04-1"
+  },
+  {
+    "analogy": "whale:mammal",
+    "relation": "a whale is a type of mammal",
+    "answer": "oak:tree",
+    "cite": "etc"
+  },
+  {
+    "analogy": "worm:beetle",
+    "relation": "a beetle is a type of worms",
+    "answer": "squirrel:chipmunk",
+    "cite": "14-6/2"
+  },
+  {
+    "analogy": "magnate:merchant",
+    "relation": "magnate is a successful merchant",
+    "answer": "",
+    "cite": "ACR"
+  },
+  {
+    "analogy": "galoshes:shoes",
+    "relation": "a galosh is a type of shoes to prevent rains",
+    "answer": "raincoat:suit",
+    "cite": "ACR"
+  }
+];
+
+    let filteredData = [];
+    let currentIndex = 0;
+
+    const searchScreen = document.getElementById('searchScreen');
+    const cardScreen = document.getElementById('cardScreen');
+    const searchInput = document.getElementById('searchInput');
+    const cardContent = document.getElementById('cardContent');
+
+    function isNumericCite(cite) {
+      return /^\d+-\d+$/.test(cite);
+    }
+
+    function getCitePrefix(cite) {
+      const match = cite.match(/^(\d+)-/);
+      return match ? match[1].padStart(2, '0') : null;
+    }
+
+    function splitPair(str) {
+      return str.split(':');
+    }
+
+    function performSearch() {
+      const search = searchInput.value.trim().toLowerCase();
+      
+      if (!search) return;
+
+      if (search === 'other') {
+        filteredData = analogyData.filter(item => !isNumericCite(item.cite));
+      } else {
+        const num = parseInt(search);
+        if (!isNaN(num)) {
+          const prefix = num.toString().padStart(2, '0');
+          filteredData = analogyData.filter(item => getCitePrefix(item.cite) === prefix);
+        } else {
+          filteredData = analogyData.filter(item => 
+            item.cite.toLowerCase().includes(search) ||
+            item.analogy.toLowerCase().includes(search)
+          );
+        }
+      }
+
+      if (filteredData.length > 0) {
+        currentIndex = 0;
+        showCardScreen();
+        renderCard();
+      } else {
+        searchInput.style.borderColor = '#ef4444';
+        setTimeout(() => searchInput.style.borderColor = '', 300);
+      }
+    }
+
+    // Search only on Enter key
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+
+    function showCardScreen() {
+      searchScreen.classList.add('hidden');
+      cardScreen.classList.add('active');
+    }
+
+    function showSearch() {
+      searchScreen.classList.remove('hidden');
+      cardScreen.classList.remove('active');
+      searchInput.value = '';
+      searchInput.focus();
+      filteredData = [];
+    }
+
+    function renderCard(animOut, animIn) {
+      const item = filteredData[currentIndex];
+      const [a1, a2] = splitPair(item.analogy);
+      const [ans1, ans2] = splitPair(item.answer);
+      const isOther = !isNumericCite(item.cite);
+
+      if (animOut) {
+        cardContent.classList.add(animOut);
+      }
+
+      setTimeout(() => {
+        document.getElementById('citeBadge').textContent = item.cite;
+        document.getElementById('citeBadge').className = 'cite-badge ' + (isOther ? 'other' : '');
+        document.getElementById('analogyPair').innerHTML = 
+          `<span class="word">${a1}</span><span class="colon">:</span><span class="word">${a2}</span>`;
+        document.getElementById('relation').textContent = item.relation;
+        document.getElementById('answerPair').innerHTML = 
+          `<span class="word">${ans1}</span><span class="colon">:</span><span class="word">${ans2}</span>`;
+        document.getElementById('counter').textContent = `${currentIndex + 1} / ${filteredData.length}`;
+
+        cardContent.className = 'card-content';
+        if (animIn) {
+          cardContent.classList.add(animIn);
+          setTimeout(() => cardContent.className = 'card-content', 30);
+        }
+      }, animOut ? 250 : 0);
+    }
+
+    function nextCard() {
+      currentIndex = (currentIndex + 1) % filteredData.length;
+      renderCard('slide-out-up', 'slide-in-down');
+    }
+
+    function prevCard() {
+      currentIndex = (currentIndex - 1 + filteredData.length) % filteredData.length;
+      renderCard('slide-out-down', 'slide-in-up');
+    }
+
+    function nextCardHorizontal() {
+      currentIndex = (currentIndex + 1) % filteredData.length;
+      renderCard('slide-out-left', 'slide-in-right');
+    }
+
+    function prevCardHorizontal() {
+      currentIndex = (currentIndex - 1 + filteredData.length) % filteredData.length;
+      renderCard('slide-out-right', 'slide-in-left');
+    }
+
+    // Click navigation
+    const cardContainer = document.getElementById('cardContainer');
+    
+    cardContainer.addEventListener('click', (e) => {
+      const midX = window.innerWidth / 2;
+      const midY = window.innerHeight / 2;
+      const x = e.clientX;
+      const y = e.clientY;
+
+      const diffX = x - midX;
+      const diffY = y - midY;
+
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0) nextCardHorizontal();
+        else prevCardHorizontal();
+      } else {
+        if (diffY > 0) nextCard();
+        else prevCard();
+      }
+    });
+
+    // Touch support
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    cardContainer.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].clientX;
+      touchStartY = e.changedTouches[0].clientY;
+    });
+
+    cardContainer.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      if (Math.max(Math.abs(diffX), Math.abs(diffY)) < 50) return;
+
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0) prevCardHorizontal();
+        else nextCardHorizontal();
+      } else {
+        if (diffY > 0) prevCard();
+        else nextCard();
+      }
+    });
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (!cardScreen.classList.contains('active')) return;
+      
+      switch(e.key) {
+        case 'ArrowRight': nextCardHorizontal(); break;
+        case 'ArrowLeft': prevCardHorizontal(); break;
+        case 'ArrowDown': nextCard(); break;
+        case 'ArrowUp': prevCard(); break;
+        case ' ': e.preventDefault(); nextCard(); break;
+        case 'Escape': showSearch(); break;
+      }
+    });
+
+    // Mouse wheel
+    let wheelTimeout = null;
+    cardContainer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      clearTimeout(wheelTimeout);
+      
+      wheelTimeout = setTimeout(() => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+          if (e.deltaX > 0) nextCardHorizontal();
+          else prevCardHorizontal();
+        } else {
+          if (e.deltaY > 0) nextCard();
+          else prevCard();
+        }
+      }, 50);
+    }, { passive: false });
+
+    searchInput.focus();
+  </script>
+</body>
+</html>
