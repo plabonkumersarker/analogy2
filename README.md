@@ -44,6 +44,7 @@ Add your own analogies to the `analogyData` array:
   "answer": "answer1:answer2",
   "cite": "01-3"  // or "etc", "prince" for non-numeric
 }
+```
 
 ## 📦 Installation
 
