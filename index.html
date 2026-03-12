@@ -105,6 +105,7 @@
       padding: 8px 12px;
       border-radius: 8px;
       transition: all 0.2s;
+      user-select: none;
     }
 
     .back-btn:hover {
@@ -116,6 +117,7 @@
       font-size: 0.875rem;
       color: #737373;
       font-family: monospace;
+      user-select: none;
     }
 
     .card-container {
@@ -126,16 +128,33 @@
       align-items: center;
       padding: 20px;
       position: relative;
+      touch-action: pan-y;
+    }
+
+    .nav-zones {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      z-index: 1;
+    }
+
+    .nav-zone {
       cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
     }
 
     .card-content {
       text-align: center;
       max-width: 90%;
+      position: relative;
+      z-index: 2;
       transition: transform 0.3s ease, opacity 0.3s ease;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .cite-badge {
@@ -148,6 +167,7 @@
       background: #141414;
       border-radius: 20px;
       border: 1px solid #262626;
+      user-select: none;
     }
 
     .cite-badge.other {
@@ -189,6 +209,7 @@
       letter-spacing: 0.1em;
       color: #22c55e;
       margin-bottom: 12px;
+      user-select: none;
     }
 
     .answer-pair {
@@ -212,6 +233,8 @@
       font-size: 0.75rem;
       color: #404040;
       text-align: center;
+      user-select: none;
+      z-index: 3;
     }
 
     /* Animations */
@@ -257,6 +280,14 @@
       <div class="counter" id="counter">0 / 0</div>
     </div>
     <div class="card-container" id="cardContainer">
+      <!-- Navigation zones behind content -->
+      <div class="nav-zones" id="navZones">
+        <div class="nav-zone" data-dir="prev-v"></div>
+        <div class="nav-zone" data-dir="next-v"></div>
+        <div class="nav-zone" data-dir="prev-h"></div>
+        <div class="nav-zone" data-dir="next-h"></div>
+      </div>
+      <!-- Content on top -->
       <div class="card-content" id="cardContent">
         <div class="cite-badge" id="citeBadge">00-0</div>
         <div class="analogy-pair" id="analogyPair">
@@ -271,7 +302,7 @@
         </div>
       </div>
     </div>
-    <div class="swipe-hint">Swipe any direction to navigate</div>
+    <div class="swipe-hint">Swipe or tap edges to navigate</div>
   </div>
 
   <script>
@@ -6467,7 +6498,6 @@
       }
     }
 
-    // Search only on Enter key
     searchInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         performSearch();
@@ -6535,37 +6565,30 @@
       renderCard('slide-out-right', 'slide-in-left');
     }
 
-    // Click navigation
-    const cardContainer = document.getElementById('cardContainer');
-    
-    cardContainer.addEventListener('click', (e) => {
-      const midX = window.innerWidth / 2;
-      const midY = window.innerHeight / 2;
-      const x = e.clientX;
-      const y = e.clientY;
-
-      const diffX = x - midX;
-      const diffY = y - midY;
-
-      if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX > 0) nextCardHorizontal();
-        else prevCardHorizontal();
-      } else {
-        if (diffY > 0) nextCard();
-        else prevCard();
-      }
+    // Navigation zones click handler
+    document.querySelectorAll('.nav-zone').forEach(zone => {
+      zone.addEventListener('click', (e) => {
+        e.preventDefault();
+        const dir = zone.dataset.dir;
+        switch(dir) {
+          case 'prev-v': prevCard(); break;
+          case 'next-v': nextCard(); break;
+          case 'prev-h': prevCardHorizontal(); break;
+          case 'next-h': nextCardHorizontal(); break;
+        }
+      });
     });
 
     // Touch support
     let touchStartX = 0;
     let touchStartY = 0;
 
-    cardContainer.addEventListener('touchstart', (e) => {
+    document.getElementById('cardContainer').addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].clientX;
       touchStartY = e.changedTouches[0].clientY;
     });
 
-    cardContainer.addEventListener('touchend', (e) => {
+    document.getElementById('cardContainer').addEventListener('touchend', (e) => {
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
       const diffX = touchEndX - touchStartX;
@@ -6598,7 +6621,7 @@
 
     // Mouse wheel
     let wheelTimeout = null;
-    cardContainer.addEventListener('wheel', (e) => {
+    document.getElementById('cardContainer').addEventListener('wheel', (e) => {
       e.preventDefault();
       clearTimeout(wheelTimeout);
       
