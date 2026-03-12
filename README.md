@@ -44,3 +44,24 @@ Add your own analogies to the `analogyData` array:
   "answer": "answer1:answer2",
   "cite": "01-3"  // or "etc", "prince" for non-numeric
 }
+
+## 📦 Installation
+
+No installation needed! Just open the HTML file in any modern browser.
+
+For local use:
+1. Download `index.html`
+2. Double-click to open in browser
+3. Or serve with any static server:
+   ```bash
+   python -m http.server 8000
+   # Then visit http://localhost:8000
+
+---
+
+## 📝 License
+
+```markdown
+## 📝 License
+
+MIT License - feel free to use for your own study materials!
