@@ -2,7 +2,7 @@
 
 A minimalistic, student-friendly flashcard app for practicing GRE-style analogies.
 
-![Demo](https://plabonkumersarker.github.io/analogy2/)
+**🌐 Live Demo:** [https://plabonkumersarker.github.io/analogy2/](https://plabonkumersarker.github.io/analogy2/)
 
 ## ✨ Features
 
@@ -15,7 +15,7 @@ A minimalistic, student-friendly flashcard app for practicing GRE-style analogie
 
 ## 🚀 Usage
 
-1. Open the app
+1. Open the [live demo](https://plabonkumersarker.github.io/analogy2/)
 2. Type a number (e.g., `01`, `5`, `12`) or `Other` in the search box
 3. Press **Enter** to load matching analogies
 4. Navigate cards by:
